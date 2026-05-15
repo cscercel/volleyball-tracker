@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -18,7 +17,7 @@ type Querier interface {
 	EditPlayerName(ctx context.Context, arg EditPlayerNameParams) (Player, error)
 	GetPlayer(ctx context.Context, id uuid.UUID) (Player, error)
 	GetPlayerSeasonalStats(ctx context.Context, arg GetPlayerSeasonalStatsParams) (PlayerStat, error)
-	GetPlayerStats(ctx context.Context, playerID pgtype.UUID) ([]PlayerStat, error)
+	GetPlayerStats(ctx context.Context, playerID uuid.UUID) ([]PlayerStat, error)
 	ListPlayers(ctx context.Context) ([]Player, error)
 	ListSeasonalStats(ctx context.Context, arg ListSeasonalStatsParams) ([]PlayerStat, error)
 	UpdatePlayerStatsLoss(ctx context.Context, arg UpdatePlayerStatsLossParams) (PlayerStat, error)

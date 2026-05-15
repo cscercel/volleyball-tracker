@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createPlayer = `-- name: CreatePlayer :one
@@ -37,9 +36,9 @@ RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_
 `
 
 type CreatePlayerStatsParams struct {
-	PlayerID  pgtype.UUID `json:"player_id"`
-	MatchType string      `json:"match_type"`
-	Season    int32       `json:"season"`
+	PlayerID  uuid.UUID `json:"player_id"`
+	MatchType string    `json:"match_type"`
+	Season    int32     `json:"season"`
 }
 
 func (q *Queries) CreatePlayerStats(ctx context.Context, arg CreatePlayerStatsParams) (PlayerStat, error) {
@@ -122,9 +121,9 @@ AND season = $3
 `
 
 type GetPlayerSeasonalStatsParams struct {
-	PlayerID  pgtype.UUID `json:"player_id"`
-	MatchType string      `json:"match_type"`
-	Season    int32       `json:"season"`
+	PlayerID  uuid.UUID `json:"player_id"`
+	MatchType string    `json:"match_type"`
+	Season    int32     `json:"season"`
 }
 
 func (q *Queries) GetPlayerSeasonalStats(ctx context.Context, arg GetPlayerSeasonalStatsParams) (PlayerStat, error) {
@@ -151,7 +150,7 @@ SELECT id, player_id, match_type, season, wins, losses, otl, streak, longest_str
 WHERE player_id = $1
 `
 
-func (q *Queries) GetPlayerStats(ctx context.Context, playerID pgtype.UUID) ([]PlayerStat, error) {
+func (q *Queries) GetPlayerStats(ctx context.Context, playerID uuid.UUID) ([]PlayerStat, error) {
 	rows, err := q.db.Query(ctx, getPlayerStats, playerID)
 	if err != nil {
 		return nil, err
@@ -272,11 +271,11 @@ RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_
 `
 
 type UpdatePlayerStatsLossParams struct {
-	PlayerID  pgtype.UUID `json:"player_id"`
-	MatchType string      `json:"match_type"`
-	Season    int32       `json:"season"`
-	Scored    *int32      `json:"scored"`
-	Conceded  *int32      `json:"conceded"`
+	PlayerID  uuid.UUID `json:"player_id"`
+	MatchType string    `json:"match_type"`
+	Season    int32     `json:"season"`
+	Scored    *int32    `json:"scored"`
+	Conceded  *int32    `json:"conceded"`
 }
 
 func (q *Queries) UpdatePlayerStatsLoss(ctx context.Context, arg UpdatePlayerStatsLossParams) (PlayerStat, error) {
@@ -318,11 +317,11 @@ RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_
 `
 
 type UpdatePlayerStatsOtlParams struct {
-	PlayerID  pgtype.UUID `json:"player_id"`
-	MatchType string      `json:"match_type"`
-	Season    int32       `json:"season"`
-	Scored    *int32      `json:"scored"`
-	Conceded  *int32      `json:"conceded"`
+	PlayerID  uuid.UUID `json:"player_id"`
+	MatchType string    `json:"match_type"`
+	Season    int32     `json:"season"`
+	Scored    *int32    `json:"scored"`
+	Conceded  *int32    `json:"conceded"`
 }
 
 func (q *Queries) UpdatePlayerStatsOtl(ctx context.Context, arg UpdatePlayerStatsOtlParams) (PlayerStat, error) {
@@ -366,11 +365,11 @@ RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_
 `
 
 type UpdatePlayerStatsWinParams struct {
-	PlayerID      pgtype.UUID `json:"player_id"`
-	MatchType     string      `json:"match_type"`
-	LongestStreak *int32      `json:"longest_streak"`
-	Scored        *int32      `json:"scored"`
-	Conceded      *int32      `json:"conceded"`
+	PlayerID      uuid.UUID `json:"player_id"`
+	MatchType     string    `json:"match_type"`
+	LongestStreak *int32    `json:"longest_streak"`
+	Scored        *int32    `json:"scored"`
+	Conceded      *int32    `json:"conceded"`
 }
 
 func (q *Queries) UpdatePlayerStatsWin(ctx context.Context, arg UpdatePlayerStatsWinParams) (PlayerStat, error) {

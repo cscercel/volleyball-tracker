@@ -16,7 +16,7 @@ CREATE TABLE players (
 
 CREATE TABLE player_stats (
     id              UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id       UUID    REFERENCES players(id) ON DELETE CASCADE,
+    player_id       UUID    NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     match_type      TEXT    NOT NULL CHECK (match_type IN ('indoor', 'beach')),
     season          INTEGER NOT NULL,
     wins            INTEGER DEFAULT 0,
@@ -42,8 +42,8 @@ CREATE TABLE matches (
 
 CREATE TABLE match_players (
     id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-    match_id    UUID    REFERENCES matches(id) ON DELETE CASCADE,
-    player_id   UUID    REFERENCES players(id) ON DELETE CASCADE,
+    match_id    UUID    NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+    player_id   UUID    NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     color       TEXT    NOT NULL CHECK (color IN ('blue', 'red'))
 );
 
