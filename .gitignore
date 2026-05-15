@@ -25,3 +25,6 @@ htmlcov/
 # secrets
 .env
 .streamlit/
+
+# builds
+bin/
