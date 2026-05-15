@@ -12,13 +12,47 @@ type PlayerService struct {
 	queries	*db.Queries
 }
 
+type PlayerStats struct {
+	Stats			db.PlayerStat	`json:"stats"`
+	Played			int				`json:"played"`
+	WinLossRatio	float32			`json:"winloss_ratio"`
+	EfficiencyRatio	float32			`json:"efficiency_ratio"`
+	Points			int				`json:"points"`
+}
+
 type PlayerWithStats struct {
 	PlayerName	string			`json:"player_name"`
-	Stats		[]db.PlayerStat	`json:"stats"`
+	PlayerStats	[]PlayerStats	`json:"player_stats"`
 }
 
 func NewPlayerService(queries *db.Queries) *PlayerService {
 	return &PlayerService{queries: queries}
+}
+
+func ComputePlayerStats(stats db.PlayerStat) PlayerStats {
+	// Calculate matches played and points
+	played := stats.Wins + stats.Losses + stats.Otl
+	points := 2 * stats.Wins + stats.Otl
+
+	// Calculate ratios
+	winloss_ratio := 0.0
+	efficiency_ratio := 0.0
+
+	if played > 0 {
+		winloss_ratio = stats.Wins / played
+	}
+
+	if stats.Conceded > 0 {
+		efficiency_ratio = stats.Scored / stats.Conceded
+	}
+
+	return PlayerStats{
+		Stats: stats,
+		Played: played,
+		Points: points,
+		WinLossRatio: winloss_ratio,
+		EfficiencyRatio: efficiency_ratio,
+	}
 }
 
 func (s *PlayerService) GetPlayerCareer(ctx context.Context, playerID uuid.UUID) (PlayerWithStats, error) {

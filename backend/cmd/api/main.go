@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 
-
-	"github.com/cscercel/volleyball-tracker/internal/api"
 	"github.com/cscercel/volleyball-tracker/internal/config"
 	"github.com/cscercel/volleyball-tracker/internal/repository"
 
@@ -31,13 +29,13 @@ func main() {
 	defer pool.Close()
 
 	// Instantiate API
-	a := api.New(pool, cfg)
-	router := a.Routes()
-
-	addr := fmt.Sprintf(":%s", cfg.Port)
-	log.Printf("Behold DnD server listening on %s", addr)
-
-	if err := http.ListenAndServe(addr, router); err != nil {
-		log.Fatalf("server error: %v", err)
-	}
+	// a := api.New(pool, cfg)
+	// router := a.Routes()
+	//
+	// addr := fmt.Sprintf(":%s", cfg.Port)
+	// log.Printf("Behold DnD server listening on %s", addr)
+	//
+	// if err := http.ListenAndServe(addr, router); err != nil {
+	// 	log.Fatalf("server error: %v", err)
+	// }
 }

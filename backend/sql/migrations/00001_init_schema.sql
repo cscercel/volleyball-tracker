@@ -19,13 +19,13 @@ CREATE TABLE player_stats (
     player_id       UUID    NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     match_type      TEXT    NOT NULL CHECK (match_type IN ('indoor', 'beach')),
     season          INTEGER NOT NULL,
-    wins            INTEGER DEFAULT 0,
-    losses          INTEGER DEFAULT 0,
-    otl             INTEGER DEFAULT 0,
-    streak          INTEGER DEFAULT 0,
-    longest_streak  INTEGER DEFAULT 0,
-    scored          INTEGER DEFAULT 0,
-    conceded        INTEGER DEFAULT 0,
+    wins            INTEGER NOT NULL DEFAULT 0,
+    losses          INTEGER NOT NULL DEFAULT 0,
+    otl             INTEGER NOT NULL DEFAULT 0,
+    streak          INTEGER NOT NULL DEFAULT 0,
+    longest_streak  INTEGER NOT NULL DEFAULT 0,
+    scored          INTEGER NOT NULL DEFAULT 0,
+    conceded        INTEGER NOT NULL DEFAULT 0,
     UNIQUE(player_id, match_type, season)
 );
 
