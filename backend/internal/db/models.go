@@ -39,13 +39,13 @@ type PlayerStat struct {
 	PlayerID      uuid.UUID `json:"player_id"`
 	MatchType     string    `json:"match_type"`
 	Season        int32     `json:"season"`
-	Wins          *int32    `json:"wins"`
-	Losses        *int32    `json:"losses"`
-	Otl           *int32    `json:"otl"`
-	Streak        *int32    `json:"streak"`
-	LongestStreak *int32    `json:"longest_streak"`
-	Scored        *int32    `json:"scored"`
-	Conceded      *int32    `json:"conceded"`
+	Wins          int32     `json:"wins"`
+	Losses        int32     `json:"losses"`
+	Otl           int32     `json:"otl"`
+	Streak        int32     `json:"streak"`
+	LongestStreak int32     `json:"longest_streak"`
+	Scored        int32     `json:"scored"`
+	Conceded      int32     `json:"conceded"`
 }
 
 type User struct {

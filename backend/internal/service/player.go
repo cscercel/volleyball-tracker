@@ -14,10 +14,10 @@ type PlayerService struct {
 
 type PlayerStats struct {
 	Stats			db.PlayerStat	`json:"stats"`
-	Played			int				`json:"played"`
-	WinLossRatio	float32			`json:"winloss_ratio"`
-	EfficiencyRatio	float32			`json:"efficiency_ratio"`
-	Points			int				`json:"points"`
+	Played			int32			`json:"played"`
+	WinLossRatio	float64			`json:"winloss_ratio"`
+	EfficiencyRatio	float64			`json:"efficiency_ratio"`
+	Points			int32			`json:"points"`
 }
 
 type PlayerWithStats struct {
@@ -39,17 +39,17 @@ func ComputePlayerStats(stats db.PlayerStat) PlayerStats {
 	efficiency_ratio := 0.0
 
 	if played > 0 {
-		winloss_ratio = stats.Wins / played
+		winloss_ratio = float64(stats.Wins / played)
 	}
 
 	if stats.Conceded > 0 {
-		efficiency_ratio = stats.Scored / stats.Conceded
+		efficiency_ratio = float64(stats.Scored / stats.Conceded)
 	}
 
 	return PlayerStats{
 		Stats: stats,
-		Played: played,
-		Points: points,
+		Played: int32(played),
+		Points: int32(points),
 		WinLossRatio: winloss_ratio,
 		EfficiencyRatio: efficiency_ratio,
 	}
@@ -67,9 +67,14 @@ func (s *PlayerService) GetPlayerCareer(ctx context.Context, playerID uuid.UUID)
 		return PlayerWithStats{}, fmt.Errorf("could not load player stats: %w", err)
 	}
 
+	player_stats := []PlayerStats{}
+	for i, stat := range stats {
+		player_stats[i] = ComputePlayerStats(stat)	
+	}
+
 	return PlayerWithStats{
 		PlayerName: player.Name,
-		Stats: stats,
+		PlayerStats: player_stats,
 	}, nil
 }
 
@@ -93,9 +98,11 @@ func (s *PlayerService) GetPlayerSeason(
 		return PlayerWithStats{}, fmt.Errorf("could not load player stats: %w", err)
 	}
 
+	player_stats := []PlayerStats{ComputePlayerStats(stats)}
+
 	return PlayerWithStats{
 		PlayerName: player.Name,
-		Stats: []db.PlayerStat{stats},
+		PlayerStats: player_stats,
 	}, nil
 }
 
@@ -119,9 +126,11 @@ func (s *PlayerService) CreatePlayer(
 		return PlayerWithStats{}, fmt.Errorf("could not initialize player stats: %w", err)
 	}
 
+	player_stats := []PlayerStats{ComputePlayerStats(stats)}
+
 	return PlayerWithStats{
 		PlayerName: player.Name,
-		Stats: []db.PlayerStat{stats},
+		PlayerStats: player_stats,
 	}, nil
 }
 
@@ -177,9 +186,21 @@ func (s *PlayerService) ListSeasonalRoster(
 		return []PlayerWithStats{}, fmt.Errorf("could not load seasonal stats: %w", err)
 	}
 
-	for _, player := range roster {
-		
+	// Create a map to lookup name
+	nameMap := make(map[uuid.UUID]string)
+	for _, p := range roster {
+		nameMap[p.ID] = p.Name
 	}
 
-	return stats, nil
+	players := []PlayerWithStats{}
+
+	for i := range stats {
+		id := stats[i].PlayerID
+		if name, ok := nameMap[id]; ok {
+			player_stats := []PlayerStats{ComputePlayerStats(stats[i])}
+			players[i] = PlayerWithStats{PlayerName: name, PlayerStats: player_stats}	
+		}
+	}
+
+	return players, nil
 }
