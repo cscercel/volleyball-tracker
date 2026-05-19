@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/cscercel/volleyball-tracker/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -100,7 +99,7 @@ func (h *PlayerHandler) handleGetPlayerSeason(w http.ResponseWriter, r *http.Req
 // @Summary      Create Player
 // @Tags         players
 // @Produce      json
-// @Param        body body      object{name=string,match_type=string,season=int} true "Player Body"
+// @Param        body body      object{name=string} true "Player Body"
 // @Success      201  {array}   service.PlayerWithStats
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
@@ -108,8 +107,6 @@ func (h *PlayerHandler) handleGetPlayerSeason(w http.ResponseWriter, r *http.Req
 func (h *PlayerHandler) handleCreatePlayer(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name 		string 	`json:"name"`
-		MatchType 	string	`json:"match_type"`
-		Season		int		`json:"season"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -117,18 +114,7 @@ func (h *PlayerHandler) handleCreatePlayer(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Check Match Type and Season before creating player
-	if body.MatchType != "indoor" && body.MatchType != "beach" {
-		respondWithError(w, http.StatusBadRequest, "invalid match type provided", errors.New(""))
-		return
-	}
-
-	if body.Season != time.Now().UTC().Year() {
-		respondWithError(w, http.StatusBadRequest, "invalid season provided", errors.New(""))
-		return
-	}
-
-	player, err := h.service.CreatePlayer(r.Context(), body.Name, body.MatchType, body.Season)
+	player, err := h.service.CreatePlayer(r.Context(), body.Name)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "could not create player", err)
 		return

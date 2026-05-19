@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/cscercel/volleyball-tracker/internal/db"
 	"github.com/google/uuid"
@@ -142,27 +143,30 @@ func (s *PlayerService) GetPlayerSeason(
 	}, nil
 }
 
-func (s *PlayerService) CreatePlayer(
-	ctx context.Context, playerName, match_type string, season int,
-) (PlayerWithStats, error) {
+func (s *PlayerService) CreatePlayer(ctx context.Context, playerName string) (PlayerWithStats, error) {
 	player, err := s.queries.CreatePlayer(ctx, playerName)
 	if err != nil {
 		return PlayerWithStats{}, fmt.Errorf("could not create player: %w", err)		
 	}
 
-	// Initialize stats for season at moment of creation of player (player will have at least one stat)
-	params := db.CreatePlayerStatsParams{
-		PlayerID: player.ID,
-		MatchType: match_type,
-		Season: int32(season),
-	}
+	// Initialize stats for indoor and beach for the current season
+	match_types := []string{"indoor", "beach"}
+	player_stats := []PlayerStats{}
 
-	stats, err := s.queries.CreatePlayerStats(ctx, params)
-	if err != nil {
-		return PlayerWithStats{}, fmt.Errorf("could not initialize player stats: %w", err)
-	}
+	for _, match_type := range match_types {
+		params := db.CreatePlayerStatsParams{
+			PlayerID: player.ID,
+			MatchType: match_type,
+			Season: int32(time.Now().UTC().Year()),
+		}
 
-	player_stats := []PlayerStats{ComputePlayerStats(stats)}
+		stats, err := s.queries.CreatePlayerStats(ctx, params)
+		if err != nil {
+			return PlayerWithStats{}, fmt.Errorf("could not initialize player stats for type %s: %w", match_type, err)
+		}
+
+		player_stats = append(player_stats, ComputePlayerStats(stats))
+	}
 
 	return PlayerWithStats{
 		PlayerName: player.Name,
