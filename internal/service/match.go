@@ -88,10 +88,14 @@ func (s *MatchService) GetSeasonMatches(ctx context.Context, match_type string, 
 }
 
 func (s *MatchService) CreateMatch(
-	ctx context.Context, match_type string, blue_players, red_players []db.Player,
+	ctx context.Context, match_type string, blue_players, red_players []uuid.UUID,
 ) (MatchWithPlayers, error) {
 	if match_type != "indoor" && match_type != "beach" {
 		return MatchWithPlayers{}, fmt.Errorf("invalid match_type: expected `indoor` or `beach`, got %s", match_type)
+	}
+
+	if len(blue_players) == 0 || len(red_players) == 0 {
+		return MatchWithPlayers{}, fmt.Errorf("both teams must have at least 1 player")
 	}
 
 	season := time.Now().UTC().Year()
@@ -111,7 +115,7 @@ func (s *MatchService) CreateMatch(
 	for _, player := range blue_players {
 		player, err := s.queries.AddPlayerToMatch(ctx, db.AddPlayerToMatchParams{
 			MatchID: match.ID,
-			PlayerID: player.ID,
+			PlayerID: player,
 			Color: "blue",
 		})
 		if err != nil {
@@ -126,7 +130,7 @@ func (s *MatchService) CreateMatch(
 	for _, player := range red_players {
 		player, err := s.queries.AddPlayerToMatch(ctx, db.AddPlayerToMatchParams{
 			MatchID: match.ID,
-			PlayerID: player.ID,
+			PlayerID: player,
 			Color: "red",
 		})
 		if err != nil {
@@ -229,4 +233,61 @@ func (s *MatchService) RegisterMatch(
 		Scored: red_score,
 		Conceded: blue_score,
 	}
+
+	for _, player := range red_performance.Players {
+		if red_performance.IsWinner {
+			_, err := s.queries.UpdatePlayerStatsWin(ctx, db.UpdatePlayerStatsWinParams{
+					PlayerID: player.ID,
+					MatchType: match.MatchType,
+					Season: int32(match.Season),
+					Scored: int32(red_performance.Scored),
+					Conceded: int32(red_performance.Conceded),
+			})
+			if err != nil {
+				return db.Match{}, fmt.Errorf("failed to declare red as winner: %w", err)
+			}
+		} else if red_performance.IsOtl {
+			_, err := s.queries.UpdatePlayerStatsOtl(ctx, db.UpdatePlayerStatsOtlParams{
+				PlayerID: player.ID,
+				MatchType: match.MatchType,
+				Season: int32(match.Season),
+				Scored: int32(red_performance.Scored),
+				Conceded: int32(red_performance.Conceded),
+			})
+			if err != nil {
+				return db.Match{}, fmt.Errorf("failed to declare red as overtime loser: %w", err)
+			}
+		} else {
+			_, err := s.queries.UpdatePlayerStatsLoss(ctx, db.UpdatePlayerStatsLossParams{
+				PlayerID: player.ID,
+				MatchType: match.MatchType,
+				Season: int32(match.Season),
+				Scored: int32(red_performance.Scored),
+				Conceded: int32(red_performance.Conceded),
+			})
+			if err != nil {
+				return db.Match{}, fmt.Errorf("failed to declare red as overtime loser: %w", err)
+			}
+		}
+	}
+
+	return match, nil
+}
+
+func (s *MatchService) DeleteDraft(ctx context.Context, match_id uuid.UUID) error {
+	// Check if match was completed
+	match, err := s.queries.GetMatch(ctx, match_id)
+	if err != nil {
+		return fmt.Errorf("failed to get match: %w", err)
+	}
+
+	if !match.IsCompleted {
+		return fmt.Errorf("cannot delete a registered match")
+	}
+
+	if err := s.queries.DeleteDraft(ctx, match_id); err != nil {
+		return fmt.Errorf("could not delete match: %w", err)
+	}
+	
+	return nil
 }

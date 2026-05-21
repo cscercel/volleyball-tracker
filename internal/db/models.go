@@ -15,7 +15,7 @@ type Match struct {
 	Season      int32              `json:"season"`
 	BlueScore   int32              `json:"blue_score"`
 	RedScore    int32              `json:"red_score"`
-	IsCompleted *bool              `json:"is_completed"`
+	IsCompleted bool               `json:"is_completed"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

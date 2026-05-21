@@ -35,7 +35,7 @@ CREATE TABLE matches (
     season          INTEGER     NOT NULL,
     blue_score      INTEGER     NOT NULL DEFAULT 0,
     red_score       INTEGER     NOT NULL DEFAULT 0,
-    is_completed    BOOLEAN     DEFAULT FALSE,
+    is_completed    BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
