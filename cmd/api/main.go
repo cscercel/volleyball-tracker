@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	// "github.com/go-chi/cors"
+	"github.com/go-chi/cors"
 	_ "github.com/lib/pq"
 
 	"github.com/cscercel/volleyball-tracker/internal/config"
@@ -22,7 +22,7 @@ import (
 
 
 // @title           Volleyball Tracker API
-// @version         1.0.0
+// @version         2.0.0
 // @description     API for managing volleyball games played with friends.
 
 // @host            localhost:8080
@@ -51,20 +51,26 @@ func main() {
 
 	// Instantiate API
 	queries := db.New(pool)
+
+	// Player handlers
 	playerService := service.NewPlayerService(queries)
 	playerHandler := handler.NewPlayerHandler(playerService)
+
+	// Match handlers
+	matchService := service.NewMatchService(queries)
+	matchHandler := handler.NewMatchHandler(matchService)
 
 	// Routers
 	r := chi.NewRouter()
 
-	// r.Use(cors.Handler(cors.Options{
-	// 	AllowedOrigins:   []string{"https://*", "http://*"},
-	// 	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	// 	AllowedHeaders:   []string{"*"},
-	// 	ExposedHeaders:   []string{"Link"},
-	// 	AllowCredentials: false,
-	// 	MaxAge:           300,
-	// }))
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 
 	// Global middleware
 	r.Use(middleware.Logger)
@@ -73,6 +79,7 @@ func main() {
 	// Routes
 	r.Route("/api/v1", func(r chi.Router) {
 		playerHandler.RegisterRoutes(r)
+		matchHandler.RegisterRoutes(r)
 	})
 
 	// Small `Mandatory` test route

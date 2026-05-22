@@ -59,7 +59,7 @@ func (h *MatchHandler) handleGetMatch(w http.ResponseWriter, r *http.Request) {
 // @Summary      Get Registered Matches
 // @Tags         matches
 // @Produce      json
-// @Success      200  {array}   []db.Match
+// @Success      200  {array}   []service.MatchWithPlayers
 // @Failure      400  {object}  object{error=string}
 // @Failure      404  {object}  object{error=string}
 // @Router       /api/v1/matches/registered [get]
@@ -76,7 +76,7 @@ func (h *MatchHandler) handleGetRegisteredMatches(w http.ResponseWriter, r *http
 // @Summary      Get Drafts
 // @Tags         matches
 // @Produce      json
-// @Success      200  {array}   []db.Match
+// @Success      200  {array}   []service.MatchWithPlayers
 // @Failure      400  {object}  object{error=string}
 // @Failure      404  {object}  object{error=string}
 // @Router       /api/v1/matches/drafts [get]
@@ -95,7 +95,7 @@ func (h *MatchHandler) handleGetDrafts(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        match_type  path     string  true  "Match Type"
 // @Param        season  	path      string  true  "Season"
-// @Success      200  		{array}   []db.Match
+// @Success      200  		{array}   []service.MatchWithPlayers
 // @Failure      400  		{object}  object{error=string}
 // @Failure      404  		{object}  object{error=string}
 // @Router       /api/v1/matches [get]
@@ -126,7 +126,7 @@ func (h *MatchHandler) handleGetSeasonMatches(w http.ResponseWriter, r *http.Req
 // @Summary      Create Match
 // @Tags         matches
 // @Produce      json
-// @Param        body body      object{match_type=string, blue_players={array}, red_players={array}} true "Match Body"
+// @Param        body body      object{match_type=string, blue_players=[]string, red_players=[]string} true "Match Body"
 // @Success      201  {array}   service.MatchWithPlayers
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
@@ -159,7 +159,7 @@ func (h *MatchHandler) handleCreateMatch(w http.ResponseWriter, r *http.Request)
 // @Produce      json
 // @Param        id   path      string                				  true  "Match UUID" format(uuid)
 // @Param        body body      object{blue_score=int, red_score=int} true "Match Body"
-// @Success      200  {array}   db.Match
+// @Success      200  {object}  service.MatchWithPlayers
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/matches/{id} [put]

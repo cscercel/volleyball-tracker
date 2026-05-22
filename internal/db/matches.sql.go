@@ -73,37 +73,6 @@ func (q *Queries) DeleteDraft(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const getBlueTeamFromMatch = `-- name: GetBlueTeamFromMatch :many
-SELECT id, match_id, player_id, color FROM match_players
-WHERE match_id = $1
-AND color = "blue"
-`
-
-func (q *Queries) GetBlueTeamFromMatch(ctx context.Context, matchID uuid.UUID) ([]MatchPlayer, error) {
-	rows, err := q.db.Query(ctx, getBlueTeamFromMatch, matchID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []MatchPlayer{}
-	for rows.Next() {
-		var i MatchPlayer
-		if err := rows.Scan(
-			&i.ID,
-			&i.MatchID,
-			&i.PlayerID,
-			&i.Color,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getDrafts = `-- name: GetDrafts :many
 SELECT id, match_type, season, blue_score, red_score, is_completed, created_at, updated_at FROM matches
 WHERE is_completed = FALSE
@@ -159,14 +128,13 @@ func (q *Queries) GetMatch(ctx context.Context, id uuid.UUID) (Match, error) {
 	return i, err
 }
 
-const getRedTeamFromMatch = `-- name: GetRedTeamFromMatch :many
+const getPlayersFromMatch = `-- name: GetPlayersFromMatch :many
 SELECT id, match_id, player_id, color FROM match_players
 WHERE match_id = $1
-AND color = "red"
 `
 
-func (q *Queries) GetRedTeamFromMatch(ctx context.Context, matchID uuid.UUID) ([]MatchPlayer, error) {
-	rows, err := q.db.Query(ctx, getRedTeamFromMatch, matchID)
+func (q *Queries) GetPlayersFromMatch(ctx context.Context, matchID uuid.UUID) ([]MatchPlayer, error) {
+	rows, err := q.db.Query(ctx, getPlayersFromMatch, matchID)
 	if err != nil {
 		return nil, err
 	}

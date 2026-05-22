@@ -1,5 +1,48 @@
 basePath: /
 definitions:
+  github_com_cscercel_volleyball-tracker_internal_db.Match:
+    properties:
+      blue_score:
+        type: integer
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      id:
+        type: string
+      is_completed:
+        type: boolean
+      match_type:
+        type: string
+      red_score:
+        type: integer
+      season:
+        type: integer
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer:
+    properties:
+      color:
+        type: string
+      id:
+        type: string
+      match_id:
+        type: string
+      player_id:
+        type: string
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers:
+    properties:
+      blue_team:
+        items:
+          $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer'
+        type: array
+      match:
+        $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
+      red_team:
+        items:
+          $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer'
+        type: array
+    type: object
   github_com_cscercel_volleyball-tracker_internal_service.PlayerStats:
     properties:
       conceded:
@@ -42,6 +85,26 @@ definitions:
           $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerStats'
         type: array
     type: object
+  pgtype.InfinityModifier:
+    enum:
+    - 1
+    - 0
+    - -1
+    format: int32
+    type: integer
+    x-enum-varnames:
+    - Infinity
+    - Finite
+    - NegativeInfinity
+  pgtype.Timestamptz:
+    properties:
+      infinityModifier:
+        $ref: '#/definitions/pgtype.InfinityModifier'
+      time:
+        type: string
+      valid:
+        type: boolean
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -49,6 +112,259 @@ info:
   title: Volleyball Tracker API
   version: 1.0.0
 paths:
+  /api/v1/matches:
+    get:
+      parameters:
+      - description: Match Type
+        in: path
+        name: match_type
+        required: true
+        type: string
+      - description: Season
+        in: path
+        name: season
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+              type: array
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get Season Matches
+      tags:
+      - matches
+    post:
+      parameters:
+      - description: Match Body
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            ' blue_players':
+              items:
+                type: string
+              type: array
+            ' red_players':
+              items:
+                type: string
+              type: array
+            match_type:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create Match
+      tags:
+      - matches
+  /api/v1/matches/{id}:
+    delete:
+      parameters:
+      - description: Match UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete Match
+      tags:
+      - matches
+    get:
+      parameters:
+      - description: Match ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get Match
+      tags:
+      - matches
+    put:
+      parameters:
+      - description: Match UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Match Body
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            ' red_score':
+              type: integer
+            blue_score:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Register Match
+      tags:
+      - matches
+  /api/v1/matches/drafts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+              type: array
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get Drafts
+      tags:
+      - matches
+  /api/v1/matches/registered:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+              type: array
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get Registered Matches
+      tags:
+      - matches
   /api/v1/players:
     post:
       parameters:
@@ -58,12 +374,8 @@ paths:
         required: true
         schema:
           properties:
-            match_type:
-              type: string
             name:
               type: string
-            season:
-              type: integer
           type: object
       produces:
       - application/json
