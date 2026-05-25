@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addPlayerToMatch = `-- name: AddPlayerToMatch :one
@@ -62,49 +63,15 @@ func (q *Queries) CreateMatch(ctx context.Context, arg CreateMatchParams) (Match
 	return i, err
 }
 
-const deleteDraft = `-- name: DeleteDraft :exec
+const deleteUncompletedMatch = `-- name: DeleteUncompletedMatch :exec
 DELETE FROM matches
 WHERE is_completed = FALSE
 AND id = $1
 `
 
-func (q *Queries) DeleteDraft(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteDraft, id)
+func (q *Queries) DeleteUncompletedMatch(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUncompletedMatch, id)
 	return err
-}
-
-const getDrafts = `-- name: GetDrafts :many
-SELECT id, match_type, season, blue_score, red_score, is_completed, created_at, updated_at FROM matches
-WHERE is_completed = FALSE
-`
-
-func (q *Queries) GetDrafts(ctx context.Context) ([]Match, error) {
-	rows, err := q.db.Query(ctx, getDrafts)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Match{}
-	for rows.Next() {
-		var i Match
-		if err := rows.Scan(
-			&i.ID,
-			&i.MatchType,
-			&i.Season,
-			&i.BlueScore,
-			&i.RedScore,
-			&i.IsCompleted,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getMatch = `-- name: GetMatch :one
@@ -128,24 +95,93 @@ func (q *Queries) GetMatch(ctx context.Context, id uuid.UUID) (Match, error) {
 	return i, err
 }
 
-const getPlayersFromMatch = `-- name: GetPlayersFromMatch :many
-SELECT id, match_id, player_id, color FROM match_players
-WHERE match_id = $1
+const getMatchPlayers = `-- name: GetMatchPlayers :many
+SELECT 
+    mp.color,
+    p.id AS player_id,
+    p.name AS player_name
+FROM match_players mp
+JOIN players p ON p.id = mp.player_id
+WHERE mp.match_id = $1
+ORDER BY mp.color
 `
 
-func (q *Queries) GetPlayersFromMatch(ctx context.Context, matchID uuid.UUID) ([]MatchPlayer, error) {
-	rows, err := q.db.Query(ctx, getPlayersFromMatch, matchID)
+type GetMatchPlayersRow struct {
+	Color      string    `json:"color"`
+	PlayerID   uuid.UUID `json:"player_id"`
+	PlayerName string    `json:"player_name"`
+}
+
+func (q *Queries) GetMatchPlayers(ctx context.Context, matchID uuid.UUID) ([]GetMatchPlayersRow, error) {
+	rows, err := q.db.Query(ctx, getMatchPlayers, matchID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []MatchPlayer{}
+	items := []GetMatchPlayersRow{}
 	for rows.Next() {
-		var i MatchPlayer
+		var i GetMatchPlayersRow
+		if err := rows.Scan(&i.Color, &i.PlayerID, &i.PlayerName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPlayerSeasonalMatches = `-- name: GetPlayerSeasonalMatches :many
+SELECT
+    m.id,
+    m.match_type,
+    m.season,
+    m.blue_score,
+    m.red_score,
+    m.created_at,
+    mp.color
+FROM match_players mp
+JOIN matches m ON m.id = mp.match_id
+WHERE mp.player_id = $1
+AND m.match_type = $2
+AND m.season = $3
+AND m.is_completed = TRUE
+ORDER BY m.created_at DESC
+`
+
+type GetPlayerSeasonalMatchesParams struct {
+	PlayerID  uuid.UUID `json:"player_id"`
+	MatchType string    `json:"match_type"`
+	Season    int32     `json:"season"`
+}
+
+type GetPlayerSeasonalMatchesRow struct {
+	ID        uuid.UUID          `json:"id"`
+	MatchType string             `json:"match_type"`
+	Season    int32              `json:"season"`
+	BlueScore int32              `json:"blue_score"`
+	RedScore  int32              `json:"red_score"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Color     string             `json:"color"`
+}
+
+func (q *Queries) GetPlayerSeasonalMatches(ctx context.Context, arg GetPlayerSeasonalMatchesParams) ([]GetPlayerSeasonalMatchesRow, error) {
+	rows, err := q.db.Query(ctx, getPlayerSeasonalMatches, arg.PlayerID, arg.MatchType, arg.Season)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetPlayerSeasonalMatchesRow{}
+	for rows.Next() {
+		var i GetPlayerSeasonalMatchesRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.MatchID,
-			&i.PlayerID,
+			&i.MatchType,
+			&i.Season,
+			&i.BlueScore,
+			&i.RedScore,
+			&i.CreatedAt,
 			&i.Color,
 		); err != nil {
 			return nil, err
@@ -158,54 +194,21 @@ func (q *Queries) GetPlayersFromMatch(ctx context.Context, matchID uuid.UUID) ([
 	return items, nil
 }
 
-const getRegisteredMatches = `-- name: GetRegisteredMatches :many
+const listMatchesBySeason = `-- name: ListMatchesBySeason :many
 SELECT id, match_type, season, blue_score, red_score, is_completed, created_at, updated_at FROM matches
-WHERE is_completed = TRUE
-`
-
-func (q *Queries) GetRegisteredMatches(ctx context.Context) ([]Match, error) {
-	rows, err := q.db.Query(ctx, getRegisteredMatches)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Match{}
-	for rows.Next() {
-		var i Match
-		if err := rows.Scan(
-			&i.ID,
-			&i.MatchType,
-			&i.Season,
-			&i.BlueScore,
-			&i.RedScore,
-			&i.IsCompleted,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getSeasonMatches = `-- name: GetSeasonMatches :many
-SELECT id, match_type, season, blue_score, red_score, is_completed, created_at, updated_at FROM matches
-WHERE is_completed = TRUE
-AND match_type = $1
+WHERE match_type = $1
 AND season = $2
+AND is_completed = TRUE
+ORDER BY created_at DESC
 `
 
-type GetSeasonMatchesParams struct {
+type ListMatchesBySeasonParams struct {
 	MatchType string `json:"match_type"`
 	Season    int32  `json:"season"`
 }
 
-func (q *Queries) GetSeasonMatches(ctx context.Context, arg GetSeasonMatchesParams) ([]Match, error) {
-	rows, err := q.db.Query(ctx, getSeasonMatches, arg.MatchType, arg.Season)
+func (q *Queries) ListMatchesBySeason(ctx context.Context, arg ListMatchesBySeasonParams) ([]Match, error) {
+	rows, err := q.db.Query(ctx, listMatchesBySeason, arg.MatchType, arg.Season)
 	if err != nil {
 		return nil, err
 	}
@@ -233,35 +236,36 @@ func (q *Queries) GetSeasonMatches(ctx context.Context, arg GetSeasonMatchesPara
 	return items, nil
 }
 
-const registerMatch = `-- name: RegisterMatch :one
-UPDATE matches
-SET 
-    blue_score = $2,
-    red_score = $3,
-    is_completed = TRUE,
-    updated_at = NOW()
-WHERE id = $1
-RETURNING id, match_type, season, blue_score, red_score, is_completed, created_at, updated_at
+const listUncompletedMatches = `-- name: ListUncompletedMatches :many
+SELECT id, match_type, season, blue_score, red_score, is_completed, created_at, updated_at FROM matches
+WHERE is_completed = FALSE
 `
 
-type RegisterMatchParams struct {
-	ID        uuid.UUID `json:"id"`
-	BlueScore int32     `json:"blue_score"`
-	RedScore  int32     `json:"red_score"`
-}
-
-func (q *Queries) RegisterMatch(ctx context.Context, arg RegisterMatchParams) (Match, error) {
-	row := q.db.QueryRow(ctx, registerMatch, arg.ID, arg.BlueScore, arg.RedScore)
-	var i Match
-	err := row.Scan(
-		&i.ID,
-		&i.MatchType,
-		&i.Season,
-		&i.BlueScore,
-		&i.RedScore,
-		&i.IsCompleted,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) ListUncompletedMatches(ctx context.Context) ([]Match, error) {
+	rows, err := q.db.Query(ctx, listUncompletedMatches)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Match{}
+	for rows.Next() {
+		var i Match
+		if err := rows.Scan(
+			&i.ID,
+			&i.MatchType,
+			&i.Season,
+			&i.BlueScore,
+			&i.RedScore,
+			&i.IsCompleted,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -23,20 +23,20 @@ const docTemplate = `{
                 "tags": [
                     "matches"
                 ],
-                "summary": "Get Season Matches",
+                "summary": "List Matches By Season",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Match Type",
                         "name": "match_type",
-                        "in": "path",
+                        "in": "query",
                         "required": true
                     },
                     {
-                        "type": "string",
+                        "type": "integer",
                         "description": "Season",
                         "name": "season",
-                        "in": "path",
+                        "in": "query",
                         "required": true
                     }
                 ],
@@ -48,7 +48,7 @@ const docTemplate = `{
                             "items": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers"
+                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
                                 }
                             }
                         }
@@ -64,8 +64,8 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -94,13 +94,13 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "properties": {
-                                " blue_players": {
+                                " blue_team": {
                                     "type": "array",
                                     "items": {
                                         "type": "string"
                                     }
                                 },
-                                " red_players": {
+                                " red_team": {
                                     "type": "array",
                                     "items": {
                                         "type": "string"
@@ -119,7 +119,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers"
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
                             }
                         }
                     },
@@ -148,7 +148,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/matches/drafts": {
+        "/api/v1/matches/uncompleted": {
             "get": {
                 "produces": [
                     "application/json"
@@ -156,7 +156,7 @@ const docTemplate = `{
                 "tags": [
                     "matches"
                 ],
-                "summary": "Get Drafts",
+                "summary": "List Uncompleted Matches",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -165,7 +165,7 @@ const docTemplate = `{
                             "items": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers"
+                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
                                 }
                             }
                         }
@@ -181,55 +181,8 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/matches/registered": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "matches"
-                ],
-                "summary": "Get Registered Matches",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -254,7 +207,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Match ID",
+                        "format": "uuid",
+                        "description": "Match UUID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -266,74 +220,8 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers"
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
                             }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "matches"
-                ],
-                "summary": "Register Match",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Match UUID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Match Body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                " red_score": {
-                                    "type": "integer"
-                                },
-                                "blue_score": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers"
                         }
                     },
                     "400": {
@@ -367,7 +255,7 @@ const docTemplate = `{
                 "tags": [
                     "matches"
                 ],
-                "summary": "Delete Match",
+                "summary": "Delete Uncompleted Match",
                 "parameters": [
                     {
                         "type": "string",
@@ -407,7 +295,106 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/matches/{id}/roster": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "Get Match Players",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Match UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetMatchPlayersRow"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/players": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "List Players",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Player"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "produces": [
                     "application/json"
@@ -438,7 +425,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats"
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Player"
                             }
                         }
                     },
@@ -467,7 +454,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/players/roster": {
+        "/api/v1/players/leaderboard": {
             "get": {
                 "produces": [
                     "application/json"
@@ -475,48 +462,7 @@ const docTemplate = `{
                 "tags": [
                     "players"
                 ],
-                "summary": "List Roster",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    " name": {
-                                        "type": "string"
-                                    },
-                                    "id": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/players/roster/season": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "players"
-                ],
-                "summary": "List Seasonal Roster",
+                "summary": "Get Leaderboard",
                 "parameters": [
                     {
                         "type": "string",
@@ -539,7 +485,10 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats"
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetLeaderboardRow"
+                                }
                             }
                         }
                     },
@@ -569,6 +518,138 @@ const docTemplate = `{
             }
         },
         "/api/v1/players/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Get Player By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Match Type",
+                        "name": "match_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season",
+                        "name": "season",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByIDRow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates the name of an existing player by their UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Update Player Name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Player UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New Player Name",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Player"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "delete": {
                 "produces": [
                     "application/json"
@@ -616,7 +697,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/players/{id}/career": {
+        "/api/v1/players/{id}/history": {
             "get": {
                 "produces": [
                     "application/json"
@@ -624,129 +705,7 @@ const docTemplate = `{
                 "tags": [
                     "players"
                 ],
-                "summary": "Get Player Career",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Player ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/players/{id}/name": {
-            "put": {
-                "description": "Updates the name of an existing player by their UUID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "players"
-                ],
-                "summary": "Edit Player Name",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Player UUID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "New Player Name",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "error": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/players/{id}/season": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "players"
-                ],
-                "summary": "Get Player Season",
+                "summary": "Get Player Match History",
                 "parameters": [
                     {
                         "type": "string",
@@ -776,7 +735,77 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats"
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/players/{name}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "players"
+                ],
+                "summary": "Get Player By Name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Player Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Match Type",
+                        "name": "match_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Season",
+                        "name": "season",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow"
                             }
                         }
                     },
@@ -807,6 +836,193 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_cscercel_volleyball-tracker_internal_db.GetLeaderboardRow": {
+            "type": "object",
+            "properties": {
+                "conceded": {
+                    "type": "integer"
+                },
+                "efficiency_rate": {},
+                "id": {
+                    "type": "string"
+                },
+                "longest_streak": {
+                    "type": "integer"
+                },
+                "losses": {
+                    "type": "integer"
+                },
+                "match_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "otl": {
+                    "type": "integer"
+                },
+                "played": {
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "scored": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "streak": {
+                    "type": "integer"
+                },
+                "win_rate": {},
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_cscercel_volleyball-tracker_internal_db.GetMatchPlayersRow": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow": {
+            "type": "object",
+            "properties": {
+                "blue_score": {
+                    "type": "integer"
+                },
+                "color": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "match_type": {
+                    "type": "string"
+                },
+                "red_score": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByIDRow": {
+            "type": "object",
+            "properties": {
+                "conceded": {
+                    "type": "integer"
+                },
+                "efficiency_rate": {},
+                "id": {
+                    "type": "string"
+                },
+                "longest_streak": {
+                    "type": "integer"
+                },
+                "losses": {
+                    "type": "integer"
+                },
+                "match_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "otl": {
+                    "type": "integer"
+                },
+                "played": {
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "scored": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "streak": {
+                    "type": "integer"
+                },
+                "win_rate": {},
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow": {
+            "type": "object",
+            "properties": {
+                "conceded": {
+                    "type": "integer"
+                },
+                "efficiency_rate": {},
+                "id": {
+                    "type": "string"
+                },
+                "longest_streak": {
+                    "type": "integer"
+                },
+                "losses": {
+                    "type": "integer"
+                },
+                "match_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "otl": {
+                    "type": "integer"
+                },
+                "played": {
+                    "type": "integer"
+                },
+                "player_id": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "scored": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "streak": {
+                    "type": "integer"
+                },
+                "win_rate": {},
+                "wins": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_cscercel_volleyball-tracker_internal_db.Match": {
             "type": "object",
             "properties": {
@@ -836,104 +1052,20 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer": {
+        "github_com_cscercel_volleyball-tracker_internal_db.Player": {
             "type": "object",
             "properties": {
-                "color": {
-                    "type": "string"
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "id": {
                     "type": "string"
                 },
-                "match_id": {
+                "name": {
                     "type": "string"
                 },
-                "player_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers": {
-            "type": "object",
-            "properties": {
-                "blue_team": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer"
-                    }
-                },
-                "match": {
-                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
-                },
-                "red_team": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer"
-                    }
-                }
-            }
-        },
-        "github_com_cscercel_volleyball-tracker_internal_service.PlayerStats": {
-            "type": "object",
-            "properties": {
-                "conceded": {
-                    "type": "integer"
-                },
-                "efficiency_ratio": {
-                    "type": "number"
-                },
-                "longest_streak": {
-                    "type": "integer"
-                },
-                "losses": {
-                    "type": "integer"
-                },
-                "match_type": {
-                    "type": "string"
-                },
-                "otl": {
-                    "type": "integer"
-                },
-                "played": {
-                    "type": "integer"
-                },
-                "points": {
-                    "type": "integer"
-                },
-                "scored": {
-                    "type": "integer"
-                },
-                "season": {
-                    "type": "integer"
-                },
-                "stats_id": {
-                    "type": "string"
-                },
-                "streak": {
-                    "type": "integer"
-                },
-                "winloss_ratio": {
-                    "type": "number"
-                },
-                "wins": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats": {
-            "type": "object",
-            "properties": {
-                "player_id": {
-                    "type": "string"
-                },
-                "player_name": {
-                    "type": "string"
-                },
-                "player_stats": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerStats"
-                    }
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 }
             }
         },
@@ -978,7 +1110,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0.0",
+	Version:          "2.0.0",
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},

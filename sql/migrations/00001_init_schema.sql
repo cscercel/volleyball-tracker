@@ -1,17 +1,9 @@
 -- +goose Up
-CREATE TABLE users (
-    id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           TEXT        NOT NULL UNIQUE,
-    hashed_password TEXT        NOT NULL,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE players (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     name        TEXT        NOT NULL UNIQUE,
-    created_at  TIMESTAMPTZ DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ DEFAULT NOW()
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE player_stats (
@@ -36,8 +28,8 @@ CREATE TABLE matches (
     blue_score      INTEGER     NOT NULL DEFAULT 0,
     red_score       INTEGER     NOT NULL DEFAULT 0,
     is_completed    BOOLEAN     NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMPTZ DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ DEFAULT NOW()
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE match_players (
@@ -48,8 +40,7 @@ CREATE TABLE match_players (
 );
 
 -- +goose Down
-DROP TABLE users;
-DROP TABLE players;
+DROP TABLE match_players;
 DROP TABLE player_stats;
 DROP TABLE matches;
-DROP TABLE match_players;
+DROP TABLE players;

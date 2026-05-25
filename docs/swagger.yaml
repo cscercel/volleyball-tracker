@@ -1,5 +1,130 @@
 basePath: /
 definitions:
+  github_com_cscercel_volleyball-tracker_internal_db.GetLeaderboardRow:
+    properties:
+      conceded:
+        type: integer
+      efficiency_rate: {}
+      id:
+        type: string
+      longest_streak:
+        type: integer
+      losses:
+        type: integer
+      match_type:
+        type: string
+      name:
+        type: string
+      otl:
+        type: integer
+      played:
+        type: integer
+      player_id:
+        type: string
+      points:
+        type: integer
+      scored:
+        type: integer
+      season:
+        type: integer
+      streak:
+        type: integer
+      win_rate: {}
+      wins:
+        type: integer
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_db.GetMatchPlayersRow:
+    properties:
+      color:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow:
+    properties:
+      blue_score:
+        type: integer
+      color:
+        type: string
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      id:
+        type: string
+      match_type:
+        type: string
+      red_score:
+        type: integer
+      season:
+        type: integer
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByIDRow:
+    properties:
+      conceded:
+        type: integer
+      efficiency_rate: {}
+      id:
+        type: string
+      longest_streak:
+        type: integer
+      losses:
+        type: integer
+      match_type:
+        type: string
+      name:
+        type: string
+      otl:
+        type: integer
+      played:
+        type: integer
+      player_id:
+        type: string
+      points:
+        type: integer
+      scored:
+        type: integer
+      season:
+        type: integer
+      streak:
+        type: integer
+      win_rate: {}
+      wins:
+        type: integer
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow:
+    properties:
+      conceded:
+        type: integer
+      efficiency_rate: {}
+      id:
+        type: string
+      longest_streak:
+        type: integer
+      losses:
+        type: integer
+      match_type:
+        type: string
+      name:
+        type: string
+      otl:
+        type: integer
+      played:
+        type: integer
+      player_id:
+        type: string
+      points:
+        type: integer
+      scored:
+        type: integer
+      season:
+        type: integer
+      streak:
+        type: integer
+      win_rate: {}
+      wins:
+        type: integer
+    type: object
   github_com_cscercel_volleyball-tracker_internal_db.Match:
     properties:
       blue_score:
@@ -19,71 +144,16 @@ definitions:
       updated_at:
         $ref: '#/definitions/pgtype.Timestamptz'
     type: object
-  github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer:
+  github_com_cscercel_volleyball-tracker_internal_db.Player:
     properties:
-      color:
-        type: string
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
       id:
         type: string
-      match_id:
+      name:
         type: string
-      player_id:
-        type: string
-    type: object
-  github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers:
-    properties:
-      blue_team:
-        items:
-          $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer'
-        type: array
-      match:
-        $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
-      red_team:
-        items:
-          $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.MatchPlayer'
-        type: array
-    type: object
-  github_com_cscercel_volleyball-tracker_internal_service.PlayerStats:
-    properties:
-      conceded:
-        type: integer
-      efficiency_ratio:
-        type: number
-      longest_streak:
-        type: integer
-      losses:
-        type: integer
-      match_type:
-        type: string
-      otl:
-        type: integer
-      played:
-        type: integer
-      points:
-        type: integer
-      scored:
-        type: integer
-      season:
-        type: integer
-      stats_id:
-        type: string
-      streak:
-        type: integer
-      winloss_ratio:
-        type: number
-      wins:
-        type: integer
-    type: object
-  github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats:
-    properties:
-      player_id:
-        type: string
-      player_name:
-        type: string
-      player_stats:
-        items:
-          $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerStats'
-        type: array
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
     type: object
   pgtype.InfinityModifier:
     enum:
@@ -110,21 +180,21 @@ info:
   contact: {}
   description: API for managing volleyball games played with friends.
   title: Volleyball Tracker API
-  version: 1.0.0
+  version: 2.0.0
 paths:
   /api/v1/matches:
     get:
       parameters:
       - description: Match Type
-        in: path
+        in: query
         name: match_type
         required: true
         type: string
       - description: Season
-        in: path
+        in: query
         name: season
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -133,7 +203,7 @@ paths:
           schema:
             items:
               items:
-                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
               type: array
             type: array
         "400":
@@ -143,14 +213,14 @@ paths:
               error:
                 type: string
             type: object
-        "404":
-          description: Not Found
+        "500":
+          description: Internal Server Error
           schema:
             properties:
               error:
                 type: string
             type: object
-      summary: Get Season Matches
+      summary: List Matches By Season
       tags:
       - matches
     post:
@@ -161,11 +231,11 @@ paths:
         required: true
         schema:
           properties:
-            ' blue_players':
+            ' blue_team':
               items:
                 type: string
               type: array
-            ' red_players':
+            ' red_team':
               items:
                 type: string
               type: array
@@ -179,7 +249,7 @@ paths:
           description: Created
           schema:
             items:
-              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
             type: array
         "400":
           description: Bad Request
@@ -226,12 +296,13 @@ paths:
               error:
                 type: string
             type: object
-      summary: Delete Match
+      summary: Delete Uncompleted Match
       tags:
       - matches
     get:
       parameters:
-      - description: Match ID
+      - description: Match UUID
+        format: uuid
         in: path
         name: id
         required: true
@@ -243,51 +314,8 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
             type: array
-        "400":
-          description: Bad Request
-          schema:
-            properties:
-              error:
-                type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            properties:
-              error:
-                type: string
-            type: object
-      summary: Get Match
-      tags:
-      - matches
-    put:
-      parameters:
-      - description: Match UUID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Match Body
-        in: body
-        name: body
-        required: true
-        schema:
-          properties:
-            ' red_score':
-              type: integer
-            blue_score:
-              type: integer
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
         "400":
           description: Bad Request
           schema:
@@ -302,11 +330,18 @@ paths:
               error:
                 type: string
             type: object
-      summary: Register Match
+      summary: Get Match
       tags:
       - matches
-  /api/v1/matches/drafts:
+  /api/v1/matches/{id}/roster:
     get:
+      parameters:
+      - description: Match UUID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -315,7 +350,7 @@ paths:
           schema:
             items:
               items:
-                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetMatchPlayersRow'
               type: array
             type: array
         "400":
@@ -325,17 +360,17 @@ paths:
               error:
                 type: string
             type: object
-        "404":
-          description: Not Found
+        "500":
+          description: Internal Server Error
           schema:
             properties:
               error:
                 type: string
             type: object
-      summary: Get Drafts
+      summary: Get Match Players
       tags:
       - matches
-  /api/v1/matches/registered:
+  /api/v1/matches/uncompleted:
     get:
       produces:
       - application/json
@@ -345,7 +380,7 @@ paths:
           schema:
             items:
               items:
-                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.MatchWithPlayers'
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
               type: array
             type: array
         "400":
@@ -355,17 +390,44 @@ paths:
               error:
                 type: string
             type: object
-        "404":
-          description: Not Found
+        "500":
+          description: Internal Server Error
           schema:
             properties:
               error:
                 type: string
             type: object
-      summary: Get Registered Matches
+      summary: List Uncompleted Matches
       tags:
       - matches
   /api/v1/players:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Player'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List Players
+      tags:
+      - players
     post:
       parameters:
       - description: Player Body
@@ -384,7 +446,7 @@ paths:
           description: Created
           schema:
             items:
-              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats'
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Player'
             type: array
         "400":
           description: Bad Request
@@ -434,7 +496,6 @@ paths:
       summary: Delete Player
       tags:
       - players
-  /api/v1/players/{id}/career:
     get:
       parameters:
       - description: Player ID
@@ -442,6 +503,16 @@ paths:
         name: id
         required: true
         type: string
+      - description: Match Type
+        in: query
+        name: match_type
+        required: true
+        type: string
+      - description: Season
+        in: query
+        name: season
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -449,7 +520,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats'
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByIDRow'
             type: array
         "400":
           description: Bad Request
@@ -465,10 +536,9 @@ paths:
               error:
                 type: string
             type: object
-      summary: Get Player Career
+      summary: Get Player By ID
       tags:
       - players
-  /api/v1/players/{id}/name:
     put:
       consumes:
       - application/json
@@ -495,7 +565,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats'
+            $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Player'
         "400":
           description: Bad Request
           schema:
@@ -510,10 +580,10 @@ paths:
               error:
                 type: string
             type: object
-      summary: Edit Player Name
+      summary: Update Player Name
       tags:
       - players
-  /api/v1/players/{id}/season:
+  /api/v1/players/{id}/history:
     get:
       parameters:
       - description: Player ID
@@ -538,7 +608,9 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats'
+              items:
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow'
+              type: array
             type: array
         "400":
           description: Bad Request
@@ -554,11 +626,27 @@ paths:
               error:
                 type: string
             type: object
-      summary: Get Player Season
+      summary: Get Player Match History
       tags:
       - players
-  /api/v1/players/roster:
+  /api/v1/players/{name}:
     get:
+      parameters:
+      - description: Player Name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Match Type
+        in: query
+        name: match_type
+        required: true
+        type: string
+      - description: Season
+        in: query
+        name: season
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -566,24 +654,26 @@ paths:
           description: OK
           schema:
             items:
-              properties:
-                ' name':
-                  type: string
-                id:
-                  type: string
-              type: object
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow'
             type: array
-        "500":
-          description: Internal Server Error
+        "400":
+          description: Bad Request
           schema:
             properties:
               error:
                 type: string
             type: object
-      summary: List Roster
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get Player By Name
       tags:
       - players
-  /api/v1/players/roster/season:
+  /api/v1/players/leaderboard:
     get:
       parameters:
       - description: Match Type
@@ -603,7 +693,9 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.PlayerWithStats'
+              items:
+                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetLeaderboardRow'
+              type: array
             type: array
         "400":
           description: Bad Request
@@ -619,7 +711,7 @@ paths:
               error:
                 type: string
             type: object
-      summary: List Seasonal Roster
+      summary: Get Leaderboard
       tags:
       - players
 securityDefinitions:

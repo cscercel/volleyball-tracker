@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -15,172 +13,49 @@ type PlayerService struct {
 	queries	*db.Queries
 }
 
-type PlayerStats struct {
-	StatsID			uuid.UUID		`json:"stats_id"`
-	MatchType		string			`json:"match_type"`
-	Season			int32			`json:"season"`
-	Wins			int32			`json:"wins"`
-	Losses			int32			`json:"losses"`
-	Otl				int32			`json:"otl"`
-	Streak			int32			`json:"streak"`
-	LongestStreak	int32			`json:"longest_streak"`
-	Scored			int32			`json:"scored"`
-	Conceded		int32			`json:"conceded"`
-	Played			int32			`json:"played"`
-	WinLossRatio	float64			`json:"winloss_ratio"`
-	EfficiencyRatio	float64			`json:"efficiency_ratio"`
-	Points			int32			`json:"points"`
-}
-
-type PlayerWithStats struct {
-	PlayerID	string			`json:"player_id"`
-	PlayerName	string			`json:"player_name"`
-	PlayerStats	[]PlayerStats	`json:"player_stats"`
-}
-
 func NewPlayerService(queries *db.Queries) *PlayerService {
 	return &PlayerService{queries: queries}
 }
 
-func ComputePlayerStats(stats db.PlayerStat) PlayerStats {
-	// Calculate matches played and points
-	played := stats.Wins + stats.Losses + stats.Otl
-	points := 2 * stats.Wins + stats.Otl
-
-	// Calculate ratios
-	winloss_ratio := 0.0
-	efficiency_ratio := 0.0
-
-	if played > 0 {
-		winloss_ratio = float64(stats.Wins) / float64(played)
-	}
-
-	if stats.Conceded > 0 {
-		efficiency_ratio = float64(stats.Scored) / float64(stats.Conceded)
-	}
-
-
-	// Update longest_streak
-	if stats.Streak > stats.LongestStreak {
-		stats.LongestStreak = stats.Streak
-	}
-
-	return PlayerStats{
-		StatsID: stats.ID,
-		MatchType: stats.MatchType,
-		Season: stats.Season,
-		Wins: stats.Wins,
-		Losses: stats.Losses,
-		Otl: stats.Otl,
-		Streak: stats.Streak,
-		LongestStreak: stats.LongestStreak,
-		Scored: stats.Scored,
-		Conceded: stats.Conceded,
-		Played: int32(played),
-		Points: int32(points),
-		WinLossRatio: winloss_ratio,
-		EfficiencyRatio: efficiency_ratio,
-	}
-}
-
-func (s *PlayerService) GetPlayerCareer(ctx context.Context, playerID uuid.UUID) (PlayerWithStats, error) {
-	player, err := s.queries.GetPlayer(ctx, playerID)
+func (s *PlayerService) CreatePlayer(ctx context.Context, name string) (db.Player, error) {
+	player, err := s.queries.CreatePlayer(ctx, name)
 	if err != nil {
-		return PlayerWithStats{}, fmt.Errorf("unable to get player: %w", err)
-	}
-	
-	// Get Stats
-	stats, err := s.queries.GetPlayerStats(ctx, playerID)
-	if err != nil {
-		return PlayerWithStats{}, fmt.Errorf("could not load player stats: %w", err)
+		return db.Player{}, fmt.Errorf("failed to create player: %w", err)
 	}
 
-	player_stats := []PlayerStats{}
-	for _, stat := range stats {
-		player_stats = append(player_stats, ComputePlayerStats(stat))
-	}
-
-	return PlayerWithStats{
-		PlayerName: player.Name,
-		PlayerStats: player_stats,
-	}, nil
-}
-
-func (s *PlayerService) GetPlayerSeason(
-	ctx context.Context, playerID uuid.UUID, match_type string, season int,
-) (PlayerWithStats, error) {
-	player, err := s.queries.GetPlayer(ctx, playerID)
-	if err != nil {
-		return PlayerWithStats{}, fmt.Errorf("no player found: %w", err)
-	}
-	
-	// Get Stats
-	params := db.GetPlayerSeasonalStatsParams{
-		PlayerID: playerID,
-		MatchType: match_type,
-		Season: int32(season),
-	}
-
-	stats, err := s.queries.GetPlayerSeasonalStats(ctx, params)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// The player exists but has no stats for given match_type and season, create a placeholder here
-			stats = db.PlayerStat{
-				PlayerID: playerID,
-				MatchType: match_type,
-				Season: int32(season),
-			}
-		} else {
-			return PlayerWithStats{}, fmt.Errorf("could not load player stats: %w", err)
-		}
-	}
-
-	player_stats := []PlayerStats{ComputePlayerStats(stats)}
-
-	return PlayerWithStats{
-		PlayerName: player.Name,
-		PlayerStats: player_stats,
-	}, nil
-}
-
-func (s *PlayerService) CreatePlayer(ctx context.Context, playerName string) (PlayerWithStats, error) {
-	player, err := s.queries.CreatePlayer(ctx, playerName)
-	if err != nil {
-		return PlayerWithStats{}, fmt.Errorf("could not create player: %w", err)		
-	}
-
-	// Initialize stats for indoor and beach for the current season
-	match_types := []string{"indoor", "beach"}
-	player_stats := []PlayerStats{}
-
-	for _, match_type := range match_types {
-		stats, err := s.queries.CreatePlayerStats(ctx, db.CreatePlayerStatsParams{
+	// Initialize player stats for both indoor and beach this season
+	for _, match_type := range []string{"indoor", "beach"} {
+		_, err := s.queries.UpsertPlayerStats(ctx, db.UpsertPlayerStatsParams{
 			PlayerID: player.ID,
 			MatchType: match_type,
 			Season: int32(time.Now().UTC().Year()),
 		})
 		if err != nil {
-			return PlayerWithStats{}, fmt.Errorf("could not initialize player stats for type %s: %w", match_type, err)
+			return db.Player{}, fmt.Errorf("failed to create stats for %v:%w", match_type, err)
 		}
-
-		player_stats = append(player_stats, ComputePlayerStats(stats))
 	}
 
-	return PlayerWithStats{
-		PlayerName: player.Name,
-		PlayerStats: player_stats,
-	}, nil
+	return player, nil
 }
 
-func (s *PlayerService) EditPlayerName(ctx context.Context, playerID uuid.UUID, name string) (db.Player, error) {
-	params := db.EditPlayerNameParams{
-		ID: playerID,
-		Name: name,
+func (s *PlayerService) ListPlayers(ctx context.Context) ([]db.Player, error) {
+	players, err := s.queries.ListPlayers(ctx)
+	if err != nil {
+		return []db.Player{}, fmt.Errorf("failed to load players: %w", err)
 	}
 
-	player, err := s.queries.EditPlayerName(ctx, params)
+	return players, nil
+}
+
+func (s *PlayerService) UpdatePlayerName(
+	ctx context.Context, playerID uuid.UUID, newName string,
+) (db.Player, error) {
+	player, err := s.queries.UpdatePlayerName(ctx, db.UpdatePlayerNameParams{
+		ID: playerID,
+		Name: newName,
+	})
 	if err != nil {
-		return db.Player{}, fmt.Errorf("could not change player name: %w", err)
+		return db.Player{}, fmt.Errorf("failed to update player name: %w", err)
 	}
 
 	return player, nil
@@ -188,59 +63,68 @@ func (s *PlayerService) EditPlayerName(ctx context.Context, playerID uuid.UUID, 
 
 func (s *PlayerService) DeletePlayer(ctx context.Context, playerID uuid.UUID) error {
 	if err := s.queries.DeletePlayer(ctx, playerID); err != nil {
-		return fmt.Errorf("could not delete player: %w", err)
+		return fmt.Errorf("failed to delete player: %w", err)
 	}
 	
 	return nil
 }
 
-func (s *PlayerService) ListRoster(ctx context.Context) ([]db.Player, error) {
-	roster, err := s.queries.ListPlayers(ctx)
+func (s *PlayerService) GetPlayerByID(
+	ctx context.Context, playerID uuid.UUID, match_type string, season int32,
+) (db.GetPlayerStatsByIDRow, error) {
+	player, err := s.queries.GetPlayerStatsByID(ctx, db.GetPlayerStatsByIDParams{
+		PlayerID: playerID,
+		MatchType: match_type,
+		Season: season,
+	})
 	if err != nil {
-		return []db.Player{}, fmt.Errorf("could not list roster: %w", err)
+		return db.GetPlayerStatsByIDRow{}, fmt.Errorf("failed to get player: %w", err)
 	}
 
-	// No need to fetch stats for entire roster, will be ONLY season specific
-	// We just want the names here for a dropdown list on the client side
-	return roster, nil
+	return player, nil
+} 
+
+func (s *PlayerService) GetPlayerByName(
+	ctx context.Context, playerName, match_type string, season int32,
+) (db.GetPlayerStatsByNameRow, error) {
+	player, err := s.queries.GetPlayerStatsByName(ctx, db.GetPlayerStatsByNameParams{
+		Name: playerName,
+		MatchType: match_type,
+		Season: season,
+	})
+	if err != nil {
+		return db.GetPlayerStatsByNameRow{}, fmt.Errorf("failed to get player: %w", err)
+	}
+
+	return player, nil
+} 
+
+func (s *PlayerService) GetLeaderboard(
+	ctx context.Context, match_type string, season int32,
+) ([]db.GetLeaderboardRow, error) {
+	leaderboard, err := s.queries.GetLeaderboard(ctx, db.GetLeaderboardParams{
+		MatchType: match_type,
+		Season: season,
+	})
+	if err != nil {
+		return []db.GetLeaderboardRow{}, fmt.Errorf("failed to get leaderboard: %w", err)
+	}
+
+	return leaderboard, nil
 }
 
-func (s *PlayerService) ListSeasonalRoster(
-	ctx context.Context, match_type string, season int,
-) ([]PlayerWithStats, error) {
-	roster, err := s.queries.ListPlayers(ctx)
-	if err != nil {
-		return []PlayerWithStats{}, fmt.Errorf("could not list roster: %w", err)
-	}
-
-	params := db.ListSeasonalStatsParams{
+// From matches.sql -> felt it was better here
+func (s *PlayerService) GetPlayerSeasonalMatches(
+	ctx context.Context, playerID uuid.UUID, match_type string, season int32,
+) ([]db.GetPlayerSeasonalMatchesRow, error) {
+	player_matches, err := s.queries.GetPlayerSeasonalMatches(ctx, db.GetPlayerSeasonalMatchesParams{
+		PlayerID: playerID,
 		MatchType: match_type,
-		Season: int32(season),
-	}
-	
-	// Merge stats
-	stats, err := s.queries.ListSeasonalStats(ctx, params)
+		Season: season,
+	})
 	if err != nil {
-		return []PlayerWithStats{}, fmt.Errorf("could not load seasonal stats: %w", err)
+		return []db.GetPlayerSeasonalMatchesRow{}, fmt.Errorf("failed to retrieve player matches: %w", err)
 	}
 
-	// Create a map to lookup name
-	nameMap := make(map[uuid.UUID]string)
-	for _, p := range roster {
-		nameMap[p.ID] = p.Name
-	}
-
-	players := []PlayerWithStats{}
-
-	// Loop keeping only players that took part in the match_type/season combo
-	for i := range stats {
-		id := stats[i].PlayerID
-		if name, ok := nameMap[id]; ok {
-			player_stats := []PlayerStats{ComputePlayerStats(stats[i])}
-			player := PlayerWithStats{PlayerName: name, PlayerStats: player_stats}	
-			players = append(players, player)
-		}
-	}
-
-	return players, nil
+	return player_matches, nil
 }

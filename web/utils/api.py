@@ -8,6 +8,9 @@ API_BASE = st.secrets["API_BASE_URL"]
 
 
 def login(email: str, password: str):
+    """
+    This function does something
+    """
     response = requests.post(
         f"{API_BASE}/auth/jwt/login",
         data={

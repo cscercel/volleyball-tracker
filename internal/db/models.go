@@ -47,11 +47,3 @@ type PlayerStat struct {
 	Scored        int32     `json:"scored"`
 	Conceded      int32     `json:"conceded"`
 }
-
-type User struct {
-	ID             uuid.UUID          `json:"id"`
-	Email          string             `json:"email"`
-	HashedPassword string             `json:"hashed_password"`
-	CreatedAt      pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
-}

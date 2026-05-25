@@ -29,37 +29,6 @@ func (q *Queries) CreatePlayer(ctx context.Context, name string) (Player, error)
 	return i, err
 }
 
-const createPlayerStats = `-- name: CreatePlayerStats :one
-INSERT INTO player_stats (player_id, match_type, season) 
-VALUES ($1, $2, $3)
-RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded
-`
-
-type CreatePlayerStatsParams struct {
-	PlayerID  uuid.UUID `json:"player_id"`
-	MatchType string    `json:"match_type"`
-	Season    int32     `json:"season"`
-}
-
-func (q *Queries) CreatePlayerStats(ctx context.Context, arg CreatePlayerStatsParams) (PlayerStat, error) {
-	row := q.db.QueryRow(ctx, createPlayerStats, arg.PlayerID, arg.MatchType, arg.Season)
-	var i PlayerStat
-	err := row.Scan(
-		&i.ID,
-		&i.PlayerID,
-		&i.MatchType,
-		&i.Season,
-		&i.Wins,
-		&i.Losses,
-		&i.Otl,
-		&i.Streak,
-		&i.LongestStreak,
-		&i.Scored,
-		&i.Conceded,
-	)
-	return i, err
-}
-
 const deletePlayer = `-- name: DeletePlayer :exec
 DELETE FROM players
 WHERE id = $1
@@ -70,96 +39,62 @@ func (q *Queries) DeletePlayer(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const editPlayerName = `-- name: EditPlayerName :one
-UPDATE players
-SET 
-    name = $2,
-    updated_at = NOW()
-WHERE id = $1
-RETURNING id, name, created_at, updated_at
+const getLeaderboard = `-- name: GetLeaderboard :many
+SELECT 
+    p.name,
+    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded,
+    2 * ps.wins + ps.otl AS points,
+    ps.wins + ps.losses + ps.otl AS played,
+    CASE 
+        WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
+        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+    END AS win_rate,
+    CASE 
+        WHEN ps.conceded = 0 THEN 0
+        ELSE ps.scored / ps.conceded
+    END AS efficiency_rate
+FROM player_stats ps
+JOIN players p ON p.id = ps.player_id
+WHERE ps.match_type = $1
+AND ps.season = $2
+ORDER BY points DESC
 `
 
-type EditPlayerNameParams struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+type GetLeaderboardParams struct {
+	MatchType string `json:"match_type"`
+	Season    int32  `json:"season"`
 }
 
-func (q *Queries) EditPlayerName(ctx context.Context, arg EditPlayerNameParams) (Player, error) {
-	row := q.db.QueryRow(ctx, editPlayerName, arg.ID, arg.Name)
-	var i Player
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+type GetLeaderboardRow struct {
+	Name           string      `json:"name"`
+	ID             uuid.UUID   `json:"id"`
+	PlayerID       uuid.UUID   `json:"player_id"`
+	MatchType      string      `json:"match_type"`
+	Season         int32       `json:"season"`
+	Wins           int32       `json:"wins"`
+	Losses         int32       `json:"losses"`
+	Otl            int32       `json:"otl"`
+	Streak         int32       `json:"streak"`
+	LongestStreak  int32       `json:"longest_streak"`
+	Scored         int32       `json:"scored"`
+	Conceded       int32       `json:"conceded"`
+	Points         int32       `json:"points"`
+	Played         int32       `json:"played"`
+	WinRate        interface{} `json:"win_rate"`
+	EfficiencyRate interface{} `json:"efficiency_rate"`
 }
 
-const getPlayer = `-- name: GetPlayer :one
-SELECT id, name, created_at, updated_at FROM players
-WHERE id = $1
-`
-
-func (q *Queries) GetPlayer(ctx context.Context, id uuid.UUID) (Player, error) {
-	row := q.db.QueryRow(ctx, getPlayer, id)
-	var i Player
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getPlayerSeasonalStats = `-- name: GetPlayerSeasonalStats :one
-SELECT id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded FROM player_stats
-WHERE player_id = $1
-AND match_type = $2
-AND season = $3
-`
-
-type GetPlayerSeasonalStatsParams struct {
-	PlayerID  uuid.UUID `json:"player_id"`
-	MatchType string    `json:"match_type"`
-	Season    int32     `json:"season"`
-}
-
-func (q *Queries) GetPlayerSeasonalStats(ctx context.Context, arg GetPlayerSeasonalStatsParams) (PlayerStat, error) {
-	row := q.db.QueryRow(ctx, getPlayerSeasonalStats, arg.PlayerID, arg.MatchType, arg.Season)
-	var i PlayerStat
-	err := row.Scan(
-		&i.ID,
-		&i.PlayerID,
-		&i.MatchType,
-		&i.Season,
-		&i.Wins,
-		&i.Losses,
-		&i.Otl,
-		&i.Streak,
-		&i.LongestStreak,
-		&i.Scored,
-		&i.Conceded,
-	)
-	return i, err
-}
-
-const getPlayerStats = `-- name: GetPlayerStats :many
-SELECT id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded FROM player_stats
-WHERE player_id = $1
-`
-
-func (q *Queries) GetPlayerStats(ctx context.Context, playerID uuid.UUID) ([]PlayerStat, error) {
-	rows, err := q.db.Query(ctx, getPlayerStats, playerID)
+func (q *Queries) GetLeaderboard(ctx context.Context, arg GetLeaderboardParams) ([]GetLeaderboardRow, error) {
+	rows, err := q.db.Query(ctx, getLeaderboard, arg.MatchType, arg.Season)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []PlayerStat{}
+	items := []GetLeaderboardRow{}
 	for rows.Next() {
-		var i PlayerStat
+		var i GetLeaderboardRow
 		if err := rows.Scan(
+			&i.Name,
 			&i.ID,
 			&i.PlayerID,
 			&i.MatchType,
@@ -171,6 +106,10 @@ func (q *Queries) GetPlayerStats(ctx context.Context, playerID uuid.UUID) ([]Pla
 			&i.LongestStreak,
 			&i.Scored,
 			&i.Conceded,
+			&i.Points,
+			&i.Played,
+			&i.WinRate,
+			&i.EfficiencyRate,
 		); err != nil {
 			return nil, err
 		}
@@ -180,6 +119,180 @@ func (q *Queries) GetPlayerStats(ctx context.Context, playerID uuid.UUID) ([]Pla
 		return nil, err
 	}
 	return items, nil
+}
+
+const getPlayerByID = `-- name: GetPlayerByID :one
+SELECT id, name, created_at, updated_at FROM players
+WHERE id = $1
+`
+
+func (q *Queries) GetPlayerByID(ctx context.Context, id uuid.UUID) (Player, error) {
+	row := q.db.QueryRow(ctx, getPlayerByID, id)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPlayerByName = `-- name: GetPlayerByName :one
+SELECT id, name, created_at, updated_at FROM players
+WHERE name = $1
+`
+
+func (q *Queries) GetPlayerByName(ctx context.Context, name string) (Player, error) {
+	row := q.db.QueryRow(ctx, getPlayerByName, name)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPlayerStatsByID = `-- name: GetPlayerStatsByID :one
+SELECT 
+    p.name,
+    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded,
+    2 * ps.wins + ps.otl AS points,
+    ps.wins + ps.losses + ps.otl AS played,
+    CASE 
+        WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
+        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+    END AS win_rate,
+    CASE 
+        WHEN ps.conceded = 0 THEN 0
+        ELSE ps.scored / ps.conceded
+    END AS efficiency_rate
+FROM player_stats ps
+JOIN players p ON p.id = ps.player_id
+WHERE ps.player_id = $1
+AND ps.match_type = $2
+AND ps.season = $3
+`
+
+type GetPlayerStatsByIDParams struct {
+	PlayerID  uuid.UUID `json:"player_id"`
+	MatchType string    `json:"match_type"`
+	Season    int32     `json:"season"`
+}
+
+type GetPlayerStatsByIDRow struct {
+	Name           string      `json:"name"`
+	ID             uuid.UUID   `json:"id"`
+	PlayerID       uuid.UUID   `json:"player_id"`
+	MatchType      string      `json:"match_type"`
+	Season         int32       `json:"season"`
+	Wins           int32       `json:"wins"`
+	Losses         int32       `json:"losses"`
+	Otl            int32       `json:"otl"`
+	Streak         int32       `json:"streak"`
+	LongestStreak  int32       `json:"longest_streak"`
+	Scored         int32       `json:"scored"`
+	Conceded       int32       `json:"conceded"`
+	Points         int32       `json:"points"`
+	Played         int32       `json:"played"`
+	WinRate        interface{} `json:"win_rate"`
+	EfficiencyRate interface{} `json:"efficiency_rate"`
+}
+
+func (q *Queries) GetPlayerStatsByID(ctx context.Context, arg GetPlayerStatsByIDParams) (GetPlayerStatsByIDRow, error) {
+	row := q.db.QueryRow(ctx, getPlayerStatsByID, arg.PlayerID, arg.MatchType, arg.Season)
+	var i GetPlayerStatsByIDRow
+	err := row.Scan(
+		&i.Name,
+		&i.ID,
+		&i.PlayerID,
+		&i.MatchType,
+		&i.Season,
+		&i.Wins,
+		&i.Losses,
+		&i.Otl,
+		&i.Streak,
+		&i.LongestStreak,
+		&i.Scored,
+		&i.Conceded,
+		&i.Points,
+		&i.Played,
+		&i.WinRate,
+		&i.EfficiencyRate,
+	)
+	return i, err
+}
+
+const getPlayerStatsByName = `-- name: GetPlayerStatsByName :one
+SELECT 
+    p.name,
+    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded,
+    2 * ps.wins + ps.otl AS points,
+    ps.wins + ps.losses + ps.otl AS played,
+    CASE 
+        WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
+        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+    END AS win_rate,
+    CASE 
+        WHEN ps.conceded = 0 THEN 0
+        ELSE ps.scored / ps.conceded
+    END AS efficiency_rate
+FROM player_stats ps
+JOIN players p ON p.id = ps.player_id
+WHERE p.name = $1
+AND ps.match_type = $2
+AND ps.season = $3
+`
+
+type GetPlayerStatsByNameParams struct {
+	Name      string `json:"name"`
+	MatchType string `json:"match_type"`
+	Season    int32  `json:"season"`
+}
+
+type GetPlayerStatsByNameRow struct {
+	Name           string      `json:"name"`
+	ID             uuid.UUID   `json:"id"`
+	PlayerID       uuid.UUID   `json:"player_id"`
+	MatchType      string      `json:"match_type"`
+	Season         int32       `json:"season"`
+	Wins           int32       `json:"wins"`
+	Losses         int32       `json:"losses"`
+	Otl            int32       `json:"otl"`
+	Streak         int32       `json:"streak"`
+	LongestStreak  int32       `json:"longest_streak"`
+	Scored         int32       `json:"scored"`
+	Conceded       int32       `json:"conceded"`
+	Points         int32       `json:"points"`
+	Played         int32       `json:"played"`
+	WinRate        interface{} `json:"win_rate"`
+	EfficiencyRate interface{} `json:"efficiency_rate"`
+}
+
+func (q *Queries) GetPlayerStatsByName(ctx context.Context, arg GetPlayerStatsByNameParams) (GetPlayerStatsByNameRow, error) {
+	row := q.db.QueryRow(ctx, getPlayerStatsByName, arg.Name, arg.MatchType, arg.Season)
+	var i GetPlayerStatsByNameRow
+	err := row.Scan(
+		&i.Name,
+		&i.ID,
+		&i.PlayerID,
+		&i.MatchType,
+		&i.Season,
+		&i.Wins,
+		&i.Losses,
+		&i.Otl,
+		&i.Streak,
+		&i.LongestStreak,
+		&i.Scored,
+		&i.Conceded,
+		&i.Points,
+		&i.Played,
+		&i.WinRate,
+		&i.EfficiencyRate,
+	)
+	return i, err
 }
 
 const listPlayers = `-- name: ListPlayers :many
@@ -212,48 +325,30 @@ func (q *Queries) ListPlayers(ctx context.Context) ([]Player, error) {
 	return items, nil
 }
 
-const listSeasonalStats = `-- name: ListSeasonalStats :many
-SELECT id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded FROM player_stats
-WHERE match_type = $1
-AND season = $2
-ORDER BY wins
+const updatePlayerName = `-- name: UpdatePlayerName :one
+UPDATE players
+SET 
+    name = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, name, created_at, updated_at
 `
 
-type ListSeasonalStatsParams struct {
-	MatchType string `json:"match_type"`
-	Season    int32  `json:"season"`
+type UpdatePlayerNameParams struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
-func (q *Queries) ListSeasonalStats(ctx context.Context, arg ListSeasonalStatsParams) ([]PlayerStat, error) {
-	rows, err := q.db.Query(ctx, listSeasonalStats, arg.MatchType, arg.Season)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []PlayerStat{}
-	for rows.Next() {
-		var i PlayerStat
-		if err := rows.Scan(
-			&i.ID,
-			&i.PlayerID,
-			&i.MatchType,
-			&i.Season,
-			&i.Wins,
-			&i.Losses,
-			&i.Otl,
-			&i.Streak,
-			&i.LongestStreak,
-			&i.Scored,
-			&i.Conceded,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) UpdatePlayerName(ctx context.Context, arg UpdatePlayerNameParams) (Player, error) {
+	row := q.db.QueryRow(ctx, updatePlayerName, arg.ID, arg.Name)
+	var i Player
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updatePlayerStatsLoss = `-- name: UpdatePlayerStatsLoss :one
@@ -354,7 +449,7 @@ UPDATE player_stats
 SET 
     wins = wins + 1,
     streak = streak + 1,
-    longest_streak = GREATEST(streak, longest_streak),
+    longest_streak = GREATEST(streak + 1, longest_streak),
     scored = scored + $4,
     conceded = conceded + $5,
     updated_at = NOW()
@@ -380,6 +475,38 @@ func (q *Queries) UpdatePlayerStatsWin(ctx context.Context, arg UpdatePlayerStat
 		arg.Scored,
 		arg.Conceded,
 	)
+	var i PlayerStat
+	err := row.Scan(
+		&i.ID,
+		&i.PlayerID,
+		&i.MatchType,
+		&i.Season,
+		&i.Wins,
+		&i.Losses,
+		&i.Otl,
+		&i.Streak,
+		&i.LongestStreak,
+		&i.Scored,
+		&i.Conceded,
+	)
+	return i, err
+}
+
+const upsertPlayerStats = `-- name: UpsertPlayerStats :one
+INSERT INTO player_stats (player_id, match_type, season) 
+VALUES ($1, $2, $3)
+ON CONFLICT (player_id, match_type, season) DO NOTHING
+RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded
+`
+
+type UpsertPlayerStatsParams struct {
+	PlayerID  uuid.UUID `json:"player_id"`
+	MatchType string    `json:"match_type"`
+	Season    int32     `json:"season"`
+}
+
+func (q *Queries) UpsertPlayerStats(ctx context.Context, arg UpsertPlayerStatsParams) (PlayerStat, error) {
+	row := q.db.QueryRow(ctx, upsertPlayerStats, arg.PlayerID, arg.MatchType, arg.Season)
 	var i PlayerStat
 	err := row.Scan(
 		&i.ID,
