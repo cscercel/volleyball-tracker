@@ -15,7 +15,7 @@ import (
 const addPlayerToMatch = `-- name: AddPlayerToMatch :one
 INSERT INTO match_players (match_id, player_id, color)
 VALUES ($1, $2, $3)
-RETURNING id, match_id, player_id, color
+RETURNING id, match_id, player_id, color, created_at, updated_at
 `
 
 type AddPlayerToMatchParams struct {
@@ -32,6 +32,8 @@ func (q *Queries) AddPlayerToMatch(ctx context.Context, arg AddPlayerToMatchPara
 		&i.MatchID,
 		&i.PlayerID,
 		&i.Color,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -268,4 +270,37 @@ func (q *Queries) ListUncompletedMatches(ctx context.Context) ([]Match, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateMatchScores = `-- name: UpdateMatchScores :one
+UPDATE matches
+SET 
+    blue_score = $2,
+    red_score = $3,
+    is_completed = TRUE,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, match_type, season, blue_score, red_score, is_completed, created_at, updated_at
+`
+
+type UpdateMatchScoresParams struct {
+	ID        uuid.UUID `json:"id"`
+	BlueScore int32     `json:"blue_score"`
+	RedScore  int32     `json:"red_score"`
+}
+
+func (q *Queries) UpdateMatchScores(ctx context.Context, arg UpdateMatchScoresParams) (Match, error) {
+	row := q.db.QueryRow(ctx, updateMatchScores, arg.ID, arg.BlueScore, arg.RedScore)
+	var i Match
+	err := row.Scan(
+		&i.ID,
+		&i.MatchType,
+		&i.Season,
+		&i.BlueScore,
+		&i.RedScore,
+		&i.IsCompleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

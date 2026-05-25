@@ -7,6 +7,16 @@ RETURNING *;
 SELECT * FROM matches
 WHERE id = $1;
 
+-- name: UpdateMatchScores :one
+UPDATE matches
+SET 
+    blue_score = $2,
+    red_score = $3,
+    is_completed = TRUE,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
 -- name: ListMatchesBySeason :many
 SELECT * FROM matches
 WHERE match_type = $1

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
+	"slices"
 	"time"
 
 	"github.com/cscercel/volleyball-tracker/internal/db"
@@ -68,6 +70,13 @@ func (s *MatchService) CreateMatch(
 	if len(blue_team) < 1 || len(red_team) < 1 {
 		return db.Match{}, fmt.Errorf("each team must have at least one player")
 	}
+
+	// Check if player is in 2 teams
+	for i := range blue_team {
+			if slices.Contains(red_team, blue_team[i]) {
+				return db.Match{}, fmt.Errorf("`%s` cannot be in both `blue_team` and `red_team`", blue_team[i])
+			}
+		}
 
 	match, err := s.queries.CreateMatch(ctx, db.CreateMatchParams{
 		MatchType: match_type,
@@ -158,4 +167,94 @@ func (s *MatchService) GetMatchPlayers(ctx context.Context, matchID uuid.UUID) (
 	}
 
 	return match_players, nil
+}
+
+func (s *MatchService) RegisterMatch(
+	ctx context.Context, matchID uuid.UUID, blue_score, red_score int32,
+) (db.Match, error) {
+	// Check scores
+	if blue_score == red_score {
+		return db.Match{}, fmt.Errorf("cannot determine a winner, scores are equal")
+	}
+
+	// Determine Winner
+	var winner string
+	if blue_score > red_score {
+		winner = "blue"
+	} else {
+		winner = "red"
+	}
+
+	// Determine if Overtime game
+	is_otl := false
+	if math.Abs(float64(blue_score) - float64(red_score)) == 2 {
+		is_otl = true
+	}
+	
+	// Apply scores to match
+	match, err := s.queries.UpdateMatchScores(ctx, db.UpdateMatchScoresParams{
+		ID: matchID,
+		BlueScore: blue_score,
+		RedScore: red_score,
+	})
+	if err != nil {
+		return db.Match{}, fmt.Errorf("failed to update match scores: %w", err)
+	}
+
+	// Apply scores to players
+	match_players, err := s.queries.GetMatchPlayers(ctx, matchID)
+	if err != nil {
+		return db.Match{}, fmt.Errorf("failed to load match players: %w", err)
+	}
+	
+	for _, player := range match_players {
+		var scored, conceded int32
+		
+		if player.Color == "blue" {
+			scored = blue_score
+			conceded = red_score
+		} else {
+			scored = red_score
+			conceded = blue_score
+		}
+
+		switch {
+		case player.Color == winner:
+			_, err := s.queries.UpdatePlayerStatsWin(ctx, db.UpdatePlayerStatsWinParams{
+				PlayerID: player.PlayerID,
+				MatchType: match.MatchType,
+				Season: match.Season,
+				Scored: scored,
+				Conceded: conceded,
+			})
+			if err != nil {
+				return db.Match{}, fmt.Errorf("failed to declare player as winner: %w", err)
+			}
+		case player.Color != winner && is_otl:
+			_, err := s.queries.UpdatePlayerStatsOtl(ctx, db.UpdatePlayerStatsOtlParams{
+				PlayerID: player.PlayerID,
+				MatchType: match.MatchType,
+				Season: match.Season,
+				Scored: scored,
+				Conceded: conceded,
+			})
+			if err != nil {
+				return db.Match{}, fmt.Errorf("failed to declare player as ot loser: %w", err)
+			}
+		default:
+			_, err := s.queries.UpdatePlayerStatsLoss(ctx, db.UpdatePlayerStatsLossParams{
+				PlayerID: player.PlayerID,
+				MatchType: match.MatchType,
+				Season: match.Season,
+				Scored: scored,
+				Conceded: conceded,
+			})
+			if err != nil {
+				return db.Match{}, fmt.Errorf("failed to declare player as loser: %w", err)
+			}
+			
+		}
+	}
+
+	return match, nil
 }

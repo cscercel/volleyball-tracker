@@ -27,6 +27,7 @@ type Querier interface {
 	ListMatchesBySeason(ctx context.Context, arg ListMatchesBySeasonParams) ([]Match, error)
 	ListPlayers(ctx context.Context) ([]Player, error)
 	ListUncompletedMatches(ctx context.Context) ([]Match, error)
+	UpdateMatchScores(ctx context.Context, arg UpdateMatchScoresParams) (Match, error)
 	UpdatePlayerName(ctx context.Context, arg UpdatePlayerNameParams) (Player, error)
 	UpdatePlayerStatsLoss(ctx context.Context, arg UpdatePlayerStatsLossParams) (PlayerStat, error)
 	UpdatePlayerStatsOtl(ctx context.Context, arg UpdatePlayerStatsOtlParams) (PlayerStat, error)

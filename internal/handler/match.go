@@ -28,6 +28,7 @@ func (h *MatchHandler) RegisterRoutes(r chi.Router) {
 		r.Get("/uncompleted", h.handleListUncompletedMatches)
 		r.Delete("/{id}", h.handleDeleteUncompletedMatch)
 		r.Get("/{id}/roster", h.handleGetMatchPlayers)
+		r.Put("/{id}", h.handleRegisterMatch)
 	})
 }
 
@@ -181,4 +182,41 @@ func (h *MatchHandler) handleGetMatchPlayers(w http.ResponseWriter, r *http.Requ
 	}
 
 	respondWithJSON(w, http.StatusOK, match_players)
+}
+
+// @Summary      Update Match Scores
+// @Description  Updates the scores of a match
+// @Tags         matches
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string                true  "Match UUID" format(uuid)
+// @Param        body body      object{blue_score=int, red_score=int}   true  "Match Scores"
+// @Success      200  {object}  db.Match
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /api/v1/matches/{id} [put]
+func (h *MatchHandler) handleRegisterMatch(w http.ResponseWriter, r *http.Request) {
+	matchID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid match id", err)
+		return
+	}
+
+	var body struct {
+		BlueScore int32	`json:"blue_score"`
+		RedScore  int32	`json:"red_score"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid body type", err)
+		return
+	}
+
+	match, err := h.service.RegisterMatch(r.Context(), matchID, body.BlueScore, body.RedScore)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "could not register match", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, match)
 }

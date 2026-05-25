@@ -41,11 +41,11 @@ SELECT
     ps.wins + ps.losses + ps.otl AS played,
     CASE 
         WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
-        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+        ELSE CAST(ps.wins AS FLOAT) / CAST((ps.wins + ps.losses + ps.otl) AS FLOAT)
     END AS win_rate,
     CASE 
         WHEN ps.conceded = 0 THEN 0
-        ELSE ps.scored / ps.conceded
+        ELSE CAST(ps.scored AS FLOAT) / CAST(ps.conceded AS FLOAT)
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
@@ -61,11 +61,11 @@ SELECT
     ps.wins + ps.losses + ps.otl AS played,
     CASE 
         WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
-        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+        ELSE CAST(ps.wins AS FLOAT) / CAST((ps.wins + ps.losses + ps.otl) AS FLOAT)
     END AS win_rate,
     CASE 
         WHEN ps.conceded = 0 THEN 0
-        ELSE ps.scored / ps.conceded
+        ELSE CAST(ps.scored AS FLOAT) / CAST(ps.conceded AS FLOAT)
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
@@ -81,11 +81,11 @@ SELECT
     ps.wins + ps.losses + ps.otl AS played,
     CASE 
         WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
-        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+        ELSE CAST(ps.wins AS FLOAT) / CAST((ps.wins + ps.losses + ps.otl) AS FLOAT)
     END AS win_rate,
     CASE 
         WHEN ps.conceded = 0 THEN 0
-        ELSE ps.scored / ps.conceded
+        ELSE CAST(ps.scored AS FLOAT) / CAST(ps.conceded AS FLOAT)
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id

@@ -21,10 +21,12 @@ type Match struct {
 }
 
 type MatchPlayer struct {
-	ID       uuid.UUID `json:"id"`
-	MatchID  uuid.UUID `json:"match_id"`
-	PlayerID uuid.UUID `json:"player_id"`
-	Color    string    `json:"color"`
+	ID        uuid.UUID          `json:"id"`
+	MatchID   uuid.UUID          `json:"match_id"`
+	PlayerID  uuid.UUID          `json:"player_id"`
+	Color     string             `json:"color"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Player struct {
@@ -35,15 +37,17 @@ type Player struct {
 }
 
 type PlayerStat struct {
-	ID            uuid.UUID `json:"id"`
-	PlayerID      uuid.UUID `json:"player_id"`
-	MatchType     string    `json:"match_type"`
-	Season        int32     `json:"season"`
-	Wins          int32     `json:"wins"`
-	Losses        int32     `json:"losses"`
-	Otl           int32     `json:"otl"`
-	Streak        int32     `json:"streak"`
-	LongestStreak int32     `json:"longest_streak"`
-	Scored        int32     `json:"scored"`
-	Conceded      int32     `json:"conceded"`
+	ID            uuid.UUID          `json:"id"`
+	PlayerID      uuid.UUID          `json:"player_id"`
+	MatchType     string             `json:"match_type"`
+	Season        int32              `json:"season"`
+	Wins          int32              `json:"wins"`
+	Losses        int32              `json:"losses"`
+	Otl           int32              `json:"otl"`
+	Streak        int32              `json:"streak"`
+	LongestStreak int32              `json:"longest_streak"`
+	Scored        int32              `json:"scored"`
+	Conceded      int32              `json:"conceded"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }

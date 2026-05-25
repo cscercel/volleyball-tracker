@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createPlayer = `-- name: CreatePlayer :one
@@ -42,16 +43,16 @@ func (q *Queries) DeletePlayer(ctx context.Context, id uuid.UUID) error {
 const getLeaderboard = `-- name: GetLeaderboard :many
 SELECT 
     p.name,
-    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded,
+    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded, ps.created_at, ps.updated_at,
     2 * ps.wins + ps.otl AS points,
     ps.wins + ps.losses + ps.otl AS played,
     CASE 
         WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
-        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+        ELSE CAST(ps.wins AS FLOAT) / CAST((ps.wins + ps.losses + ps.otl) AS FLOAT)
     END AS win_rate,
     CASE 
         WHEN ps.conceded = 0 THEN 0
-        ELSE ps.scored / ps.conceded
+        ELSE CAST(ps.scored AS FLOAT) / CAST(ps.conceded AS FLOAT)
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
@@ -66,22 +67,24 @@ type GetLeaderboardParams struct {
 }
 
 type GetLeaderboardRow struct {
-	Name           string      `json:"name"`
-	ID             uuid.UUID   `json:"id"`
-	PlayerID       uuid.UUID   `json:"player_id"`
-	MatchType      string      `json:"match_type"`
-	Season         int32       `json:"season"`
-	Wins           int32       `json:"wins"`
-	Losses         int32       `json:"losses"`
-	Otl            int32       `json:"otl"`
-	Streak         int32       `json:"streak"`
-	LongestStreak  int32       `json:"longest_streak"`
-	Scored         int32       `json:"scored"`
-	Conceded       int32       `json:"conceded"`
-	Points         int32       `json:"points"`
-	Played         int32       `json:"played"`
-	WinRate        interface{} `json:"win_rate"`
-	EfficiencyRate interface{} `json:"efficiency_rate"`
+	Name           string             `json:"name"`
+	ID             uuid.UUID          `json:"id"`
+	PlayerID       uuid.UUID          `json:"player_id"`
+	MatchType      string             `json:"match_type"`
+	Season         int32              `json:"season"`
+	Wins           int32              `json:"wins"`
+	Losses         int32              `json:"losses"`
+	Otl            int32              `json:"otl"`
+	Streak         int32              `json:"streak"`
+	LongestStreak  int32              `json:"longest_streak"`
+	Scored         int32              `json:"scored"`
+	Conceded       int32              `json:"conceded"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	Points         int32              `json:"points"`
+	Played         int32              `json:"played"`
+	WinRate        interface{}        `json:"win_rate"`
+	EfficiencyRate interface{}        `json:"efficiency_rate"`
 }
 
 func (q *Queries) GetLeaderboard(ctx context.Context, arg GetLeaderboardParams) ([]GetLeaderboardRow, error) {
@@ -106,6 +109,8 @@ func (q *Queries) GetLeaderboard(ctx context.Context, arg GetLeaderboardParams) 
 			&i.LongestStreak,
 			&i.Scored,
 			&i.Conceded,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.Points,
 			&i.Played,
 			&i.WinRate,
@@ -158,16 +163,16 @@ func (q *Queries) GetPlayerByName(ctx context.Context, name string) (Player, err
 const getPlayerStatsByID = `-- name: GetPlayerStatsByID :one
 SELECT 
     p.name,
-    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded,
+    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded, ps.created_at, ps.updated_at,
     2 * ps.wins + ps.otl AS points,
     ps.wins + ps.losses + ps.otl AS played,
     CASE 
         WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
-        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+        ELSE CAST(ps.wins AS FLOAT) / CAST((ps.wins + ps.losses + ps.otl) AS FLOAT)
     END AS win_rate,
     CASE 
         WHEN ps.conceded = 0 THEN 0
-        ELSE ps.scored / ps.conceded
+        ELSE CAST(ps.scored AS FLOAT) / CAST(ps.conceded AS FLOAT)
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
@@ -183,22 +188,24 @@ type GetPlayerStatsByIDParams struct {
 }
 
 type GetPlayerStatsByIDRow struct {
-	Name           string      `json:"name"`
-	ID             uuid.UUID   `json:"id"`
-	PlayerID       uuid.UUID   `json:"player_id"`
-	MatchType      string      `json:"match_type"`
-	Season         int32       `json:"season"`
-	Wins           int32       `json:"wins"`
-	Losses         int32       `json:"losses"`
-	Otl            int32       `json:"otl"`
-	Streak         int32       `json:"streak"`
-	LongestStreak  int32       `json:"longest_streak"`
-	Scored         int32       `json:"scored"`
-	Conceded       int32       `json:"conceded"`
-	Points         int32       `json:"points"`
-	Played         int32       `json:"played"`
-	WinRate        interface{} `json:"win_rate"`
-	EfficiencyRate interface{} `json:"efficiency_rate"`
+	Name           string             `json:"name"`
+	ID             uuid.UUID          `json:"id"`
+	PlayerID       uuid.UUID          `json:"player_id"`
+	MatchType      string             `json:"match_type"`
+	Season         int32              `json:"season"`
+	Wins           int32              `json:"wins"`
+	Losses         int32              `json:"losses"`
+	Otl            int32              `json:"otl"`
+	Streak         int32              `json:"streak"`
+	LongestStreak  int32              `json:"longest_streak"`
+	Scored         int32              `json:"scored"`
+	Conceded       int32              `json:"conceded"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	Points         int32              `json:"points"`
+	Played         int32              `json:"played"`
+	WinRate        interface{}        `json:"win_rate"`
+	EfficiencyRate interface{}        `json:"efficiency_rate"`
 }
 
 func (q *Queries) GetPlayerStatsByID(ctx context.Context, arg GetPlayerStatsByIDParams) (GetPlayerStatsByIDRow, error) {
@@ -217,6 +224,8 @@ func (q *Queries) GetPlayerStatsByID(ctx context.Context, arg GetPlayerStatsByID
 		&i.LongestStreak,
 		&i.Scored,
 		&i.Conceded,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Points,
 		&i.Played,
 		&i.WinRate,
@@ -228,16 +237,16 @@ func (q *Queries) GetPlayerStatsByID(ctx context.Context, arg GetPlayerStatsByID
 const getPlayerStatsByName = `-- name: GetPlayerStatsByName :one
 SELECT 
     p.name,
-    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded,
+    ps.id, ps.player_id, ps.match_type, ps.season, ps.wins, ps.losses, ps.otl, ps.streak, ps.longest_streak, ps.scored, ps.conceded, ps.created_at, ps.updated_at,
     2 * ps.wins + ps.otl AS points,
     ps.wins + ps.losses + ps.otl AS played,
     CASE 
         WHEN (ps.wins + ps.losses + ps.otl) = 0 THEN 0
-        ELSE ps.wins / (ps.wins + ps.losses + ps.otl)
+        ELSE CAST(ps.wins AS FLOAT) / CAST((ps.wins + ps.losses + ps.otl) AS FLOAT)
     END AS win_rate,
     CASE 
         WHEN ps.conceded = 0 THEN 0
-        ELSE ps.scored / ps.conceded
+        ELSE CAST(ps.scored AS FLOAT) / CAST(ps.conceded AS FLOAT)
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
@@ -253,22 +262,24 @@ type GetPlayerStatsByNameParams struct {
 }
 
 type GetPlayerStatsByNameRow struct {
-	Name           string      `json:"name"`
-	ID             uuid.UUID   `json:"id"`
-	PlayerID       uuid.UUID   `json:"player_id"`
-	MatchType      string      `json:"match_type"`
-	Season         int32       `json:"season"`
-	Wins           int32       `json:"wins"`
-	Losses         int32       `json:"losses"`
-	Otl            int32       `json:"otl"`
-	Streak         int32       `json:"streak"`
-	LongestStreak  int32       `json:"longest_streak"`
-	Scored         int32       `json:"scored"`
-	Conceded       int32       `json:"conceded"`
-	Points         int32       `json:"points"`
-	Played         int32       `json:"played"`
-	WinRate        interface{} `json:"win_rate"`
-	EfficiencyRate interface{} `json:"efficiency_rate"`
+	Name           string             `json:"name"`
+	ID             uuid.UUID          `json:"id"`
+	PlayerID       uuid.UUID          `json:"player_id"`
+	MatchType      string             `json:"match_type"`
+	Season         int32              `json:"season"`
+	Wins           int32              `json:"wins"`
+	Losses         int32              `json:"losses"`
+	Otl            int32              `json:"otl"`
+	Streak         int32              `json:"streak"`
+	LongestStreak  int32              `json:"longest_streak"`
+	Scored         int32              `json:"scored"`
+	Conceded       int32              `json:"conceded"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	Points         int32              `json:"points"`
+	Played         int32              `json:"played"`
+	WinRate        interface{}        `json:"win_rate"`
+	EfficiencyRate interface{}        `json:"efficiency_rate"`
 }
 
 func (q *Queries) GetPlayerStatsByName(ctx context.Context, arg GetPlayerStatsByNameParams) (GetPlayerStatsByNameRow, error) {
@@ -287,6 +298,8 @@ func (q *Queries) GetPlayerStatsByName(ctx context.Context, arg GetPlayerStatsBy
 		&i.LongestStreak,
 		&i.Scored,
 		&i.Conceded,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Points,
 		&i.Played,
 		&i.WinRate,
@@ -362,7 +375,7 @@ SET
 WHERE player_id = $1
 AND match_type = $2
 AND season = $3
-RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded
+RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded, created_at, updated_at
 `
 
 type UpdatePlayerStatsLossParams struct {
@@ -394,6 +407,8 @@ func (q *Queries) UpdatePlayerStatsLoss(ctx context.Context, arg UpdatePlayerSta
 		&i.LongestStreak,
 		&i.Scored,
 		&i.Conceded,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -408,7 +423,7 @@ SET
 WHERE player_id = $1
 AND match_type = $2
 AND season = $3
-RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded
+RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded, created_at, updated_at
 `
 
 type UpdatePlayerStatsOtlParams struct {
@@ -440,6 +455,8 @@ func (q *Queries) UpdatePlayerStatsOtl(ctx context.Context, arg UpdatePlayerStat
 		&i.LongestStreak,
 		&i.Scored,
 		&i.Conceded,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -456,7 +473,7 @@ SET
 WHERE player_id = $1
 AND match_type = $2
 AND season = $3
-RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded
+RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded, created_at, updated_at
 `
 
 type UpdatePlayerStatsWinParams struct {
@@ -488,6 +505,8 @@ func (q *Queries) UpdatePlayerStatsWin(ctx context.Context, arg UpdatePlayerStat
 		&i.LongestStreak,
 		&i.Scored,
 		&i.Conceded,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -496,7 +515,7 @@ const upsertPlayerStats = `-- name: UpsertPlayerStats :one
 INSERT INTO player_stats (player_id, match_type, season) 
 VALUES ($1, $2, $3)
 ON CONFLICT (player_id, match_type, season) DO NOTHING
-RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded
+RETURNING id, player_id, match_type, season, wins, losses, otl, streak, longest_streak, scored, conceded, created_at, updated_at
 `
 
 type UpsertPlayerStatsParams struct {
@@ -520,6 +539,8 @@ func (q *Queries) UpsertPlayerStats(ctx context.Context, arg UpsertPlayerStatsPa
 		&i.LongestStreak,
 		&i.Scored,
 		&i.Conceded,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

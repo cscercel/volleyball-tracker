@@ -248,6 +248,76 @@ const docTemplate = `{
                     }
                 }
             },
+            "put": {
+                "description": "Updates the scores of a match",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "matches"
+                ],
+                "summary": "Update Match Scores",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Match UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Match Scores",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                " red_score": {
+                                    "type": "integer"
+                                },
+                                "blue_score": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "delete": {
                 "produces": [
                     "application/json"
@@ -891,10 +961,10 @@ const docTemplate = `{
                 "color": {
                     "type": "string"
                 },
-                "id": {
+                "player_id": {
                     "type": "string"
                 },
-                "name": {
+                "player_name": {
                     "type": "string"
                 }
             }
