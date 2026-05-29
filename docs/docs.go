@@ -78,6 +78,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -249,6 +254,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Updates the scores of a match",
                 "consumes": [
                     "application/json"
@@ -319,6 +329,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -466,6 +481,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -654,6 +674,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Updates the name of an existing player by their UUID",
                 "consumes": [
                     "application/json"
@@ -721,6 +746,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -837,45 +867,44 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/players/{name}": {
-            "get": {
+        "/api/v1/users": {
+            "post": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "players"
+                    "users"
                 ],
-                "summary": "Get Player By Name",
+                "summary": "Create User",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Player Name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Match Type",
-                        "name": "match_type",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Season",
-                        "name": "season",
-                        "in": "query",
-                        "required": true
+                        "description": "User Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                },
+                                "registration_code": {
+                                    "type": "string"
+                                }
+                            }
+                        }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow"
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.CreateUserRow"
                             }
                         }
                     },
@@ -890,8 +919,201 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/change-email": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update User Email",
+                "parameters": [
+                    {
+                        "description": "User Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.UpdateUserEmailRow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/login": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Login User",
+                "parameters": [
+                    {
+                        "description": "User Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "email": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_service.UserLogin"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/password-reset": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update User Password",
+                "parameters": [
+                    {
+                        "description": "User Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "password": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.UpdateUserPasswordRow"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -906,11 +1128,31 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_cscercel_volleyball-tracker_internal_db.CreateUserRow": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                }
+            }
+        },
         "github_com_cscercel_volleyball-tracker_internal_db.GetLeaderboardRow": {
             "type": "object",
             "properties": {
                 "conceded": {
                     "type": "integer"
+                },
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "efficiency_rate": {},
                 "id": {
@@ -948,6 +1190,9 @@ const docTemplate = `{
                 },
                 "streak": {
                     "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "win_rate": {},
                 "wins": {
@@ -1001,54 +1246,8 @@ const docTemplate = `{
                 "conceded": {
                     "type": "integer"
                 },
-                "efficiency_rate": {},
-                "id": {
-                    "type": "string"
-                },
-                "longest_streak": {
-                    "type": "integer"
-                },
-                "losses": {
-                    "type": "integer"
-                },
-                "match_type": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "otl": {
-                    "type": "integer"
-                },
-                "played": {
-                    "type": "integer"
-                },
-                "player_id": {
-                    "type": "string"
-                },
-                "points": {
-                    "type": "integer"
-                },
-                "scored": {
-                    "type": "integer"
-                },
-                "season": {
-                    "type": "integer"
-                },
-                "streak": {
-                    "type": "integer"
-                },
-                "win_rate": {},
-                "wins": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow": {
-            "type": "object",
-            "properties": {
-                "conceded": {
-                    "type": "integer"
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "efficiency_rate": {},
                 "id": {
@@ -1086,6 +1285,9 @@ const docTemplate = `{
                 },
                 "streak": {
                     "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
                 },
                 "win_rate": {},
                 "wins": {
@@ -1136,6 +1338,54 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "$ref": "#/definitions/pgtype.Timestamptz"
+                }
+            }
+        },
+        "github_com_cscercel_volleyball-tracker_internal_db.UpdateUserEmailRow": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                }
+            }
+        },
+        "github_com_cscercel_volleyball-tracker_internal_db.UpdateUserPasswordRow": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/pgtype.Timestamptz"
+                }
+            }
+        },
+        "github_com_cscercel_volleyball-tracker_internal_service.UserLogin": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
                 }
             }
         },

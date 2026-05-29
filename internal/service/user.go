@@ -22,8 +22,14 @@ type UserService struct {
 	jwtSecret			string
 }
 
-func NewUserService(queries *db.Queries) *UserService {
-	return &UserService{queries: queries}
+func NewUserService(
+	queries *db.Queries, registration_code, jwt_secret string,
+) *UserService {
+	return &UserService{
+		queries: queries,
+		registrationCode: registration_code,
+		jwtSecret: jwt_secret,
+	}
 }
 
 func (s *UserService) CreateUser(

@@ -60,6 +60,10 @@ func main() {
 	matchService := service.NewMatchService(queries)
 	matchHandler := handler.NewMatchHandler(matchService)
 
+	// User handlers
+	userService := service.NewUserService(queries, cfg.RegistrationCode, cfg.JWTSecret)
+	userHandler := handler.NewUserHandler(userService)
+
 	// Routers
 	r := chi.NewRouter()
 
@@ -76,10 +80,14 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	// Local middleware
+	authMiddleware := handler.AuthenticateMiddleware(cfg.JWTSecret)
+
 	// Routes
 	r.Route("/api/v1", func(r chi.Router) {
-		playerHandler.RegisterRoutes(r)
-		matchHandler.RegisterRoutes(r)
+		playerHandler.RegisterRoutes(r, authMiddleware)
+		matchHandler.RegisterRoutes(r, authMiddleware)
+		userHandler.RegisterRoutes(r, authMiddleware)
 	})
 
 	// Small `Mandatory` test route

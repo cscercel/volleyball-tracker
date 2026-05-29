@@ -1,9 +1,22 @@
 basePath: /
 definitions:
+  github_com_cscercel_volleyball-tracker_internal_db.CreateUserRow:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+    type: object
   github_com_cscercel_volleyball-tracker_internal_db.GetLeaderboardRow:
     properties:
       conceded:
         type: integer
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
       efficiency_rate: {}
       id:
         type: string
@@ -29,6 +42,8 @@ definitions:
         type: integer
       streak:
         type: integer
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
       win_rate: {}
       wins:
         type: integer
@@ -63,6 +78,8 @@ definitions:
     properties:
       conceded:
         type: integer
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
       efficiency_rate: {}
       id:
         type: string
@@ -88,39 +105,8 @@ definitions:
         type: integer
       streak:
         type: integer
-      win_rate: {}
-      wins:
-        type: integer
-    type: object
-  github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow:
-    properties:
-      conceded:
-        type: integer
-      efficiency_rate: {}
-      id:
-        type: string
-      longest_streak:
-        type: integer
-      losses:
-        type: integer
-      match_type:
-        type: string
-      name:
-        type: string
-      otl:
-        type: integer
-      played:
-        type: integer
-      player_id:
-        type: string
-      points:
-        type: integer
-      scored:
-        type: integer
-      season:
-        type: integer
-      streak:
-        type: integer
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
       win_rate: {}
       wins:
         type: integer
@@ -154,6 +140,37 @@ definitions:
         type: string
       updated_at:
         $ref: '#/definitions/pgtype.Timestamptz'
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_db.UpdateUserEmailRow:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_db.UpdateUserPasswordRow:
+    properties:
+      created_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        $ref: '#/definitions/pgtype.Timestamptz'
+    type: object
+  github_com_cscercel_volleyball-tracker_internal_service.UserLogin:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      token:
+        type: string
     type: object
   pgtype.InfinityModifier:
     enum:
@@ -265,6 +282,8 @@ paths:
               error:
                 type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create Match
       tags:
       - matches
@@ -296,6 +315,8 @@ paths:
               error:
                 type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete Uncompleted Match
       tags:
       - matches
@@ -376,6 +397,8 @@ paths:
               error:
                 type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Update Match Scores
       tags:
       - matches
@@ -508,6 +531,8 @@ paths:
               error:
                 type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Create Player
       tags:
       - players
@@ -539,6 +564,8 @@ paths:
               error:
                 type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Delete Player
       tags:
       - players
@@ -626,6 +653,8 @@ paths:
               error:
                 type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Update Player Name
       tags:
       - players
@@ -675,50 +704,6 @@ paths:
       summary: Get Player Match History
       tags:
       - players
-  /api/v1/players/{name}:
-    get:
-      parameters:
-      - description: Player Name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: Match Type
-        in: query
-        name: match_type
-        required: true
-        type: string
-      - description: Season
-        in: query
-        name: season
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerStatsByNameRow'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            properties:
-              error:
-                type: string
-            type: object
-        "404":
-          description: Not Found
-          schema:
-            properties:
-              error:
-                type: string
-            type: object
-      summary: Get Player By Name
-      tags:
-      - players
   /api/v1/players/leaderboard:
     get:
       parameters:
@@ -760,6 +745,168 @@ paths:
       summary: Get Leaderboard
       tags:
       - players
+  /api/v1/users:
+    post:
+      parameters:
+      - description: User Body
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+            registration_code:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.CreateUserRow'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create User
+      tags:
+      - users
+  /api/v1/users/change-email:
+    put:
+      parameters:
+      - description: User Body
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.UpdateUserEmailRow'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Email
+      tags:
+      - users
+  /api/v1/users/login:
+    post:
+      parameters:
+      - description: User Body
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_service.UserLogin'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Login User
+      tags:
+      - users
+  /api/v1/users/password-reset:
+    put:
+      parameters:
+      - description: User Body
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            password:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.UpdateUserPasswordRow'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Password
+      tags:
+      - users
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by your JWT token

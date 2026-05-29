@@ -20,21 +20,28 @@ func NewMatchHandler(service *service.MatchService) *MatchHandler {
 	return &MatchHandler{service: service}
 }
 
-func (h *MatchHandler) RegisterRoutes(r chi.Router) {
+func (h *MatchHandler) RegisterRoutes(r chi.Router, authMiddleware func(http.Handler) http.Handler) {
 	r.Route("/matches", func(r chi.Router) {
-		r.Post("/", h.handleCreateMatch)
+		// Public routes
 		r.Get("/{id}", h.handleGetMatch)
 		r.Get("/", h.handleListMatchesBySeason)
 		r.Get("/uncompleted", h.handleListUncompletedMatches)
-		r.Delete("/{id}", h.handleDeleteUncompletedMatch)
 		r.Get("/{id}/roster", h.handleGetMatchPlayers)
-		r.Put("/{id}", h.handleRegisterMatch)
+
+		// Protected routes
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware)
+			r.Post("/", h.handleCreateMatch)
+			r.Delete("/{id}", h.handleDeleteUncompletedMatch)
+			r.Put("/{id}", h.handleRegisterMatch)
+		})
 	})
 }
 
 // @Summary      Create Match
 // @Tags         matches
 // @Produce      json
+// @Security     BearerAuth
 // @Param        body body      object{match_type=string, blue_team=[]string, red_team=[]string} true "Match Body"
 // @Success      201  {array}   db.Match
 // @Failure      400  {object}  object{error=string}
@@ -140,6 +147,7 @@ func (h *MatchHandler) handleListUncompletedMatches(w http.ResponseWriter, r *ht
 // @Summary      Delete Uncompleted Match
 // @Tags         matches
 // @Produce      json
+// @Security     BearerAuth
 // @Param        id   path      string                true  "Match UUID" format(uuid)
 // @Success      204  
 // @Failure      400  {object}  object{error=string}
@@ -187,6 +195,7 @@ func (h *MatchHandler) handleGetMatchPlayers(w http.ResponseWriter, r *http.Requ
 // @Summary      Update Match Scores
 // @Description  Updates the scores of a match
 // @Tags         matches
+// @Security     BearerAuth
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string                true  "Match UUID" format(uuid)
