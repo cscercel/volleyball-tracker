@@ -1,4 +1,12 @@
 -- +goose Up
+CREATE TABLE users (
+    id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    email           TEXT        NOT NULL UNIQUE,
+    hashed_password TEXT        NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE players (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     name        TEXT        NOT NULL UNIQUE,
@@ -48,3 +56,4 @@ DROP TABLE match_players;
 DROP TABLE player_stats;
 DROP TABLE matches;
 DROP TABLE players;
+DROP TABLE users;

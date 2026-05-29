@@ -14,6 +14,7 @@ type Querier interface {
 	AddPlayerToMatch(ctx context.Context, arg AddPlayerToMatchParams) (MatchPlayer, error)
 	CreateMatch(ctx context.Context, arg CreateMatchParams) (Match, error)
 	CreatePlayer(ctx context.Context, name string) (Player, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeletePlayer(ctx context.Context, id uuid.UUID) error
 	DeleteUncompletedMatch(ctx context.Context, id uuid.UUID) error
 	GetLeaderboard(ctx context.Context, arg GetLeaderboardParams) ([]GetLeaderboardRow, error)
@@ -24,6 +25,8 @@ type Querier interface {
 	GetPlayerSeasonalMatches(ctx context.Context, arg GetPlayerSeasonalMatchesParams) ([]GetPlayerSeasonalMatchesRow, error)
 	GetPlayerStatsByID(ctx context.Context, arg GetPlayerStatsByIDParams) (GetPlayerStatsByIDRow, error)
 	GetPlayerStatsByName(ctx context.Context, arg GetPlayerStatsByNameParams) (GetPlayerStatsByNameRow, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	ListMatchesBySeason(ctx context.Context, arg ListMatchesBySeasonParams) ([]Match, error)
 	ListPlayers(ctx context.Context) ([]Player, error)
 	ListUncompletedMatches(ctx context.Context) ([]Match, error)
@@ -32,6 +35,8 @@ type Querier interface {
 	UpdatePlayerStatsLoss(ctx context.Context, arg UpdatePlayerStatsLossParams) (PlayerStat, error)
 	UpdatePlayerStatsOtl(ctx context.Context, arg UpdatePlayerStatsOtlParams) (PlayerStat, error)
 	UpdatePlayerStatsWin(ctx context.Context, arg UpdatePlayerStatsWinParams) (PlayerStat, error)
+	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (UpdateUserEmailRow, error)
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (UpdateUserPasswordRow, error)
 	UpsertPlayerStats(ctx context.Context, arg UpsertPlayerStatsParams) (PlayerStat, error)
 }
 
