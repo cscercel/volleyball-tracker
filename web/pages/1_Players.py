@@ -1,6 +1,7 @@
 import math
 import streamlit as st
-from utils import api
+from datetime import datetime
+from api import api
 from utils.misc_functions import calculate_mmr, get_rank
 
 
@@ -8,159 +9,128 @@ st.set_page_config(page_title="Players", page_icon="👥", layout="wide")
 
 st.title("👥 Players")
 
-tab1, tab2 = st.tabs(["Player Profile", "Add Player"])
+current_year = datetime.utcnow().year
 
+tab1, tab2, tab3 = st.tabs(["Player Profile", "Add Player", "Manage Players"])
+
+
+# ---------------------------------------------------------------------------
+# TAB 1 — Player Profile
+# ---------------------------------------------------------------------------
 with tab1:
-    st.subheader("Show Player Stats")
-   
+    st.subheader("Player Stats")
+
     try:
         roster = api.get_players()
-        name_list = [p["name"] for p in roster]
-        option = st.selectbox("Player", name_list)
-    except Exception as e:
-        st.info("No Players yet!.")
+    except Exception:
+        roster = []
 
-    if option:
-        player = api.get_player(option)
-        
-        # Get seasons played in
-        player_seasons = set([s["season"] for s in player["stats"]])
-        season = st.number_input("Season", 
-                                 min_value=min(player_seasons), 
-                                 max_value=max(player_seasons), 
-                                 value=max(player_seasons)
-                                 )
+    if not roster:
+        st.info("No players yet!")
+        st.stop()
 
-        # Get current stats
-        try:
-            indoor_stats = next((item for item in player["stats"] 
-                if item["match_type"] == "indoor" and item["season"] == season))
-        except:
-            indoor_stats = "No matches played yet!"
+    # Build name → id lookup
+    name_to_id = {p["name"]: p["id"] for p in roster}
+    name_list = list(name_to_id.keys())
 
-        try:
-            beach_stats = next((item for item in player["stats"] 
-                if item["match_type"] == "beach" and item["season"] == season))
-        except:
-            beach_stats = "No matches played yet!"
+    selected_name = st.selectbox("Player", name_list)
+    player_id = name_to_id[selected_name]
 
-        # Get previous stats
-        try:
-            previous_indoor_stats = next((item for item in player["stats"] 
-                if item["match_type"] == "indoor" and item["season"] == season - 1))
-        except:
-            previous_indoor_stats = None
+    col_type, col_season = st.columns(2)
+    with col_type:
+        match_type = st.selectbox("Match Type", ["indoor", "beach"], key="profile_type")
+    with col_season:
+        season = st.number_input(
+            "Season", min_value=2023, max_value=current_year, value=current_year, key="profile_season"
+        )
 
-        try:
-            previous_beach_stats = next((item for item in player["stats"] 
-                if item["match_type"] == "beach" and item["season"] == season - 1))
-        except:
-            previous_beach_stats = None
+    # ---- Stats ----
+    try:
+        stats = api.get_player_stats(player_id, match_type, season)
+        has_stats = True
+    except Exception:
+        has_stats = False
 
-        indoor_col, beach_col = st.columns(2, border=True)
-    
-        with indoor_col:
-            st.subheader("Indoor Statistics")
-            if type(indoor_stats) != str:
-                # Check if previous stats
-                col1, col2, col3 = st.columns(3)
+    try:
+        prev_stats = api.get_player_stats(player_id, match_type, season - 1)
+        has_prev = True
+    except Exception:
+        has_prev = False
 
-                with col1:
-                    played = indoor_stats['played']
-                    previous_played = previous_indoor_stats['played'] if previous_indoor_stats else None
-                    delta_played = played - previous_played if previous_played else None
+    st.markdown("---")
 
-                    st.metric("Matches Played", played, delta=delta_played)
-                    st.metric("Current Win Streak", indoor_stats['streak'])
+    if not has_stats:
+        st.info(f"No {match_type} stats for season {season}.")
+    else:
+        played         = stats["played"]
+        wins           = stats["wins"]
+        losses         = stats["losses"]
+        otl            = stats["otl"]
+        points         = stats["points"]
+        streak         = stats["streak"]
+        longest_streak = stats["longest_streak"]
+        win_rate       = float(stats.get("win_rate") or 0)
+        efficiency     = float(stats.get("efficiency_rate") or 0)
+        avg_points     = points / played if played > 0 else 0
+        mmr            = calculate_mmr(avg_points, efficiency)
+        rank           = get_rank(mmr, played)
 
-                with col2:
-                    winrate = round(indoor_stats['winrate'], 2) * 100
-                    previous_winrate = previous_indoor_stats['winrate'] * 100 if previous_indoor_stats else None
-                    delta_winrate = round(winrate - previous_winrate, 2) if previous_winrate else None
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            delta_played = (played - has_prev * prev_stats["played"]) if has_prev else None
+            st.metric("Matches Played", played, delta=delta_played)
+            st.metric("Current Win Streak", streak)
+        with c2:
+            wr_pct = round(win_rate * 100, 2)
+            delta_wr = round(wr_pct - float(prev_stats.get("win_rate") or 0) * 100, 2) if has_prev else None
+            st.metric("Win Rate", f"{wr_pct}%", delta=delta_wr)
+            delta_ls = (longest_streak - prev_stats["longest_streak"]) if has_prev else None
+            st.metric("Longest Streak", longest_streak, delta=delta_ls)
+        with c3:
+            delta_pts = (points - prev_stats["points"]) if has_prev else None
+            st.metric("Points", points, delta=delta_pts)
+            st.metric("W / L / OTL", f"{wins} / {losses} / {otl}")
 
-                    longest_streak = indoor_stats['longest_streak']
-                    previous_streak = previous_indoor_stats['longest_streak'] if previous_indoor_stats else None
-                    delta_streak = longest_streak - previous_streak if previous_streak else None
+        # Rank badge
+        st.image(f"assets/{rank}.png", caption=rank, width=160)
+        if rank == "Unranked":
+            st.markdown(f"Play **{10 - played}** more games to receive a rank!")
+        elif rank == "Sensei":
+            st.markdown("_Through Heaven and Earth I alone am honored_")
+        else:
+            mmr_progress = mmr - math.floor(mmr)
+            st.progress(mmr_progress, text="Progress towards next rank")
+            st.caption(f"{int(mmr_progress * 100)} / 100")
 
-                    st.metric("Win Rate", f"{winrate}%", delta=delta_winrate)
-                    st.metric("Highest Win Streak", longest_streak, delta=delta_streak)
-                with col3:
-                    points = indoor_stats['points']
-                    previous_points = previous_indoor_stats['points'] if previous_indoor_stats else None
-                    delta_points = points - previous_points if previous_points else None
-                    
-                    st.metric("Points", points, delta=delta_points)
+    # ---- Match History ----
+    st.markdown("---")
+    st.subheader("Match History")
+    try:
+        history = api.get_player_history(player_id, match_type, season)
+        if not history:
+            st.info("No completed matches this season.")
+        else:
+            for m in history:
+                blue_score = m["blue_score"]
+                red_score  = m["red_score"]
+                color      = m["color"]  # "blue" or "red"
 
-                # Get Rank
-                mmr = calculate_mmr(indoor_stats['avg_points'], indoor_stats['efficiency'])
-                rank = get_rank(mmr, indoor_stats['played'])
-                st.image(f"frontend/assets/{rank}.png", caption=rank)
+                my_score    = blue_score if color == "blue" else red_score
+                their_score = red_score  if color == "blue" else blue_score
+                won = my_score > their_score
+                is_otl = abs(blue_score - red_score) == 2 and not won
 
-                # Create progress bar
-                if rank == "Unranked":
-                    st.markdown(f"Play **{10 - played}** more games to receive a rank!", text_alignment="center") 
-                elif rank == "Sensei":
-                    st.markdown("_Through Heaven and Earth I alone am honored_", text_alignment="center")
-                else:
-                    mmr_progress = mmr - math.floor(mmr)
-                    st.progress(mmr_progress, text="Progress towards next rank")
-                    st.markdown(f"{int(mmr_progress * 100)} / 100", text_alignment="right")
-            else:
-                st.markdown(indoor_stats)
-
-        with beach_col:
-            st.subheader("Beach Statistics")
-            if type(beach_stats) != str:
-                # Check if previous stats
-                col1, col2, col3 = st.columns(3)
-
-                with col1:
-                    played = beach_stats['played']
-                    previous_played = previous_beach_stats['played'] if previous_beach_stats else None
-                    delta_played = played - previous_played if previous_played else None
-
-                    st.metric("Matches Played", played, delta=delta_played)
-                    st.metric("Current Win Streak", beach_stats['streak'])
-
-                with col2:
-                    winrate = round(beach_stats['winrate'], 2) * 100
-                    previous_winrate = previous_beach_stats['winrate'] * 100 if previous_beach_stats else None
-                    delta_winrate = round(winrate - previous_winrate, 2) if previous_winrate else None
-
-                    longest_streak = beach_stats['longest_streak']
-                    previous_streak = previous_beach_stats['longest_streak'] if previous_beach_stats else None
-                    delta_streak = longest_streak - previous_streak if previous_streak else None
-
-                    st.metric("Win Rate", f"{winrate}%", delta=delta_winrate)
-                    st.metric("Highest Win Streak", longest_streak, delta=delta_streak)
-                with col3:
-                    points = beach_stats['points']
-                    previous_points = previous_beach_stats['points'] if previous_beach_stats else None
-                    delta_points = points - previous_points if previous_points else None
-
-                    st.metric("Points", points, delta=delta_points)
-
-                # Get Rank
-                mmr = calculate_mmr(beach_stats['avg_points'], beach_stats['efficiency'])
-                rank = get_rank(mmr, beach_stats['played'])
-                st.image(f"frontend/assets/{rank}.png", caption=rank)
-                
-                # Create progress bar
-                if rank == "Unranked":
-                    st.markdown(f"Play **{10 - played}** more games to receive a rank!", text_alignment="center") 
-                elif rank == "Sensei":
-                    st.markdown("_Through Heaven and Earth I alone am honored_", text_alignment="center")
-                else:
-                    mmr_progress = mmr - math.floor(mmr)
-                    st.progress(mmr_progress, text="Progress towards next rank")
-                    st.markdown(f"{int(mmr_progress * 100)} / 100", text_alignment="right")
-
-            else:
-                st.markdown(beach_stats)
+                result_label = "✅ Win" if won else ("⚠️ OTL" if is_otl else "❌ Loss")
+                created = m.get("created_at", "")
+                st.write(f"{result_label} — {my_score}:{their_score} ({color} team) — {created[:10]}")
+    except Exception:
+        st.error("Failed to load match history.")
 
 
+# ---------------------------------------------------------------------------
+# TAB 2 — Add Player
+# ---------------------------------------------------------------------------
 with tab2:
-    # Add new player
     st.subheader("Add New Player")
     with st.form("add_player"):
         player_name = st.text_input("Player Name")
@@ -170,5 +140,42 @@ with tab2:
             try:
                 api.create_player(player_name)
                 st.success(f"✅ Added {player_name}")
-            except Exception as e:
-                st.error("Failed to add Player")
+            except Exception:
+                st.error("Failed to add player.")
+
+
+# ---------------------------------------------------------------------------
+# TAB 3 — Manage Players (rename / delete)
+# ---------------------------------------------------------------------------
+with tab3:
+    st.subheader("Manage Players")
+
+    if not roster:
+        st.info("No players to manage.")
+    else:
+        manage_name = st.selectbox("Select player", name_list, key="manage_select")
+        manage_id   = name_to_id[manage_name]
+
+        with st.expander("✏️ Rename Player"):
+            with st.form("rename_player"):
+                new_name = st.text_input("New name", value=manage_name)
+                if st.form_submit_button("Rename"):
+                    try:
+                        api.update_player_name(manage_id, new_name)
+                        st.success(f"✅ Renamed to {new_name}")
+                        st.rerun()
+                    except Exception:
+                        st.error("Failed to rename player.")
+
+        with st.expander("🗑️ Delete Player"):
+            st.warning(f"This will permanently delete **{manage_name}**.")
+            if st.button("Confirm Delete", type="primary"):
+                if not st.session_state.get("authenticated"):
+                    st.error("You must be logged in to delete players.")
+                else:
+                    try:
+                        api.delete_player(manage_id)
+                        st.success(f"✅ Deleted {manage_name}")
+                        st.rerun()
+                    except Exception:
+                        st.error("Failed to delete player.")
