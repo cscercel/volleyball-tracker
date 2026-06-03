@@ -1,35 +1,35 @@
 <script lang="ts">
-  import { getLeaderboard, type PlayerStats } from '../lib/api/index.ts'
+import { getLeaderboard, type PlayerStats } from '../lib/api/index.ts'
 
-  const currentYear = new Date().getFullYear()
+const currentYear = new Date().getFullYear()
 
-  let matchType = $state('indoor')
-  let season = $state(currentYear)
-  let leaderboard: PlayerStats[] = $state([])
-  let loading = $state(false)
-  let error = $state('')
+    let matchType = $state('indoor')
+let season = $state(currentYear)
+    let leaderboard: PlayerStats[] = $state([])
+let loading = $state(false)
+    let error = $state('')
 
-  async function fetchLeaderboard() {
-    loading = true
-    error = ''
-    try {
-      leaderboard = await getLeaderboard(matchType, season)
-    } catch (e) {
-      error = 'Failed to load leaderboard.'
-    } finally {
-      loading = false
+    async function fetchLeaderboard() {
+        loading = true
+            error = ''
+            try {
+                leaderboard = await getLeaderboard(matchType, season)
+            } catch (e) {
+                error = 'Failed to load leaderboard.'
+            } finally {
+                loading = false
+            }
     }
-  }
 
-  // Fetch whenever matchType or season changes
-  $effect(() => {
-    matchType
-    season
-    fetchLeaderboard()
-  })
+// Fetch whenever matchType or season changes
+$effect(() => {
+        matchType
+        season
+        fetchLeaderboard()
+        })
 
 function calculateMmr(avgPoints: number, efficiencyRate: number): number {
-  return avgPoints * efficiencyRate
+    return avgPoints * efficiencyRate
 }
 
 function getRank(played: number, points: number, efficiencyRate: number): string {
@@ -67,101 +67,101 @@ function getRank(played: number, points: number, efficiencyRate: number): string
 </script>
 
 <div class="page">
-  <h1>🏆 Leaderboard</h1>
+<h1>🏆 Leaderboard</h1>
 
-  <div class="filters">
-    <select bind:value={matchType}>
-      <option value="indoor">Indoor</option>
-      <option value="beach">Beach</option>
-    </select>
+<div class="filters">
+<select bind:value={matchType}>
+<option value="indoor">Indoor</option>
+<option value="beach">Beach</option>
+</select>
 
-    <input
-      type="number"
-      min="2023"
-      max={currentYear}
-      bind:value={season}
-    />
-  </div>
+<input
+type="number"
+min="2023"
+max={currentYear}
+bind:value={season}
+/>
+</div>
 
-  {#if loading}
-    <p>Loading...</p>
-  {:else if error}
-    <p class="error">{error}</p>
-  {:else if leaderboard.length === 0}
-    <p>No stats for {matchType} in season {season}.</p>
-  {:else}
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Player</th>
-          <th>Played</th>
-          <th>Wins</th>
-          <th>Losses</th>
-          <th>OTL</th>
-          <th>Points</th>
-          <th>Win Rate</th>
-          <th>Rank</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each leaderboard as player, index}
-          <tr>
-            <td>{index + 1}</td>
-            <td>{player.name}</td>
-            <td>{player.played}</td>
-            <td>{player.wins}</td>
-            <td>{player.losses}</td>
-            <td>{player.otl}</td>
-            <td>{player.points}</td>
-            <td>{(player.win_rate * 100).toFixed(1)}%</td>
-            <td>{getRank(player.played, player.points, player.efficiency_rate)}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  {/if}
+{#if loading}
+<p>Loading...</p>
+{:else if error}
+<p class="error">{error}</p>
+{:else if leaderboard.length === 0}
+<p>No stats for {matchType} in season {season}.</p>
+{:else}
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Player</th>
+<th>Played</th>
+<th>Wins</th>
+<th>Losses</th>
+<th>OTL</th>
+<th>Points</th>
+<th>Win Rate</th>
+<th>Rank</th>
+</tr>
+</thead>
+<tbody>
+{#each leaderboard as player, index}
+<tr>
+<td>{index + 1}</td>
+<td>{player.name}</td>
+<td>{player.played}</td>
+<td>{player.wins}</td>
+<td>{player.losses}</td>
+<td>{player.otl}</td>
+<td>{player.points}</td>
+<td>{(player.win_rate * 100).toFixed(1)}%</td>
+<td>{getRank(player.played, player.points, player.efficiency_rate)}</td>
+</tr>
+{/each}
+</tbody>
+</table>
+{/if}
 </div>
 
 <style>
-  .page {
-    padding: 2rem;
-  }
+.page {
+padding: 2rem;
+}
 
-  .filters {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
+.filters {
+display: flex;
+gap: 1rem;
+     margin-bottom: 1.5rem;
+}
 
-  select, input {
-    padding: 0.5rem;
-    font-size: 1rem;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-  }
+select, input {
+padding: 0.5rem;
+         font-size: 1rem;
+         border-radius: 4px;
+border: 1px solid #ccc;
+}
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
+table {
+width: 100%;
+       border-collapse: collapse;
+}
 
-  th, td {
+th, td {
     text-align: left;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #eee;
-  }
+padding: 0.75rem 1rem;
+         border-bottom: 1px solid #eee;
+}
 
-  th {
+th {
     font-weight: 600;
-    background: #1a1a2e;
-  }
+background: #1a1a2e;
+}
 
-  tr:hover {
-    background: #f5f5f5;
-  }
+tr:hover {
+background: #f5f5f5;
+   }
 
-  .error {
-    color: red;
-  }
+.error {
+color: red;
+}
 </style>
