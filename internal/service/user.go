@@ -11,24 +11,24 @@ import (
 )
 
 type UserLogin struct {
-	ID			uuid.UUID	`json:"id"`
-	Email		string		`json:"email"`		
-	Token		string		`json:"token"`
+	ID    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
+	Token string    `json:"token"`
 }
 
 type UserService struct {
-	queries				*db.Queries
-	registrationCode	string
-	jwtSecret			string
+	queries          *db.Queries
+	registrationCode string
+	jwtSecret        string
 }
 
 func NewUserService(
 	queries *db.Queries, registration_code, jwt_secret string,
 ) *UserService {
 	return &UserService{
-		queries: queries,
+		queries:          queries,
 		registrationCode: registration_code,
-		jwtSecret: jwt_secret,
+		jwtSecret:        jwt_secret,
 	}
 }
 
@@ -47,7 +47,7 @@ func (s *UserService) CreateUser(
 	}
 
 	user, err := s.queries.CreateUser(ctx, db.CreateUserParams{
-		Email: email,
+		Email:          email,
 		HashedPassword: hashed_password,
 	})
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *UserService) GetUser(ctx context.Context, email, password string) (User
 	}
 
 	return UserLogin{
-		ID: user.ID,
+		ID:    user.ID,
 		Email: user.Email,
 		Token: token,
 	}, nil
@@ -95,7 +95,7 @@ func (s *UserService) UpdateUserEmail(
 	}
 
 	user_updated, err := s.queries.UpdateUserEmail(ctx, db.UpdateUserEmailParams{
-		ID: user.ID,
+		ID:    user.ID,
 		Email: new_email,
 	})
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *UserService) UpdateUserPassword(
 	}
 
 	user_updated, err := s.queries.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
-		ID: user.ID,
+		ID:             user.ID,
 		HashedPassword: hashed_password,
 	})
 	if err != nil {

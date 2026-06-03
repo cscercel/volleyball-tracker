@@ -10,8 +10,8 @@ import (
 )
 
 type UserHandler struct {
-	service		*service.UserService
-	jwtSecret	string
+	service   *service.UserService
+	jwtSecret string
 }
 
 func NewUserHandler(service *service.UserService) *UserHandler {
@@ -43,9 +43,9 @@ func (h *UserHandler) RegisterRoutes(r chi.Router, authMiddleware func(http.Hand
 // @Router       /api/v1/users [post]
 func (h *UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Email				string	`json:"email"`
-		Password			string	`json:"password"`
-		RegistrationCode	string	`json:"registration_code"`
+		Email            string `json:"email"`
+		Password         string `json:"password"`
+		RegistrationCode string `json:"registration_code"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -72,8 +72,8 @@ func (h *UserHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 // @Router       /api/v1/users/login [post]
 func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Email		string	`json:"email"`
-		Password	string	`json:"password"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -101,7 +101,7 @@ func (h *UserHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 // @Router       /api/v1/users/change-email [put]
 func (h *UserHandler) handleUpdateUserEmail(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		NewEmail	string	`json:"new_email"`
+		NewEmail string `json:"new_email"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -135,7 +135,7 @@ func (h *UserHandler) handleUpdateUserEmail(w http.ResponseWriter, r *http.Reque
 // @Router       /api/v1/users/password-reset [put]
 func (h *UserHandler) handleUpdateUserPassword(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		NewPassword	string	`json:"new_password"`
+		NewPassword string `json:"new_password"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

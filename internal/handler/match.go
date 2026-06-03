@@ -13,7 +13,7 @@ import (
 )
 
 type MatchHandler struct {
-	service	*service.MatchService
+	service *service.MatchService
 }
 
 func NewMatchHandler(service *service.MatchService) *MatchHandler {
@@ -49,9 +49,9 @@ func (h *MatchHandler) RegisterRoutes(r chi.Router, authMiddleware func(http.Han
 // @Router       /api/v1/matches [post]
 func (h *MatchHandler) handleCreateMatch(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		MatchType 	string 		`json:"match_type"`
-		BlueTeam	[]string	`json:"blue_team"`
-		RedTeam		[]string	`json:"red_team"`
+		MatchType string   `json:"match_type"`
+		BlueTeam  []string `json:"blue_team"`
+		RedTeam   []string `json:"red_team"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -105,7 +105,7 @@ func (h *MatchHandler) handleListMatchesBySeason(w http.ResponseWriter, r *http.
 	// Query params
 	matchType := r.URL.Query().Get("match_type")
 	if matchType != "indoor" && matchType != "beach" {
-		respondWithError(w, http.StatusBadRequest, "invalid match type", 
+		respondWithError(w, http.StatusBadRequest, "invalid match type",
 			fmt.Errorf("expected: `indoor` or `beach`, got: `%s`", matchType),
 		)
 		return
@@ -149,7 +149,7 @@ func (h *MatchHandler) handleListUncompletedMatches(w http.ResponseWriter, r *ht
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string                true  "Match UUID" format(uuid)
-// @Success      204  
+// @Success      204
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/matches/{id} [delete]
@@ -212,8 +212,8 @@ func (h *MatchHandler) handleRegisterMatch(w http.ResponseWriter, r *http.Reques
 	}
 
 	var body struct {
-		BlueScore int32	`json:"blue_score"`
-		RedScore  int32	`json:"red_score"`
+		BlueScore int32 `json:"blue_score"`
+		RedScore  int32 `json:"red_score"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

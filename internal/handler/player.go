@@ -13,7 +13,7 @@ import (
 )
 
 type PlayerHandler struct {
-	service	*service.PlayerService
+	service *service.PlayerService
 }
 
 func NewPlayerHandler(service *service.PlayerService) *PlayerHandler {
@@ -49,7 +49,7 @@ func (h *PlayerHandler) RegisterRoutes(r chi.Router, authMiddleware func(http.Ha
 // @Router       /api/v1/players [post]
 func (h *PlayerHandler) handleCreatePlayer(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name	string 	`json:"name"`
+		Name string `json:"name"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -125,7 +125,7 @@ func (h *PlayerHandler) handleUpdatePlayerName(w http.ResponseWriter, r *http.Re
 // @Security     BearerAuth
 // @Produce      json
 // @Param        id   path      string                true  "Player UUID" format(uuid)
-// @Success      204  
+// @Success      204
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/players/{id} [delete]
@@ -140,7 +140,7 @@ func (h *PlayerHandler) handleDeletePlayer(w http.ResponseWriter, r *http.Reques
 		respondWithError(w, http.StatusInternalServerError, "could not delete character", err)
 		return
 	}
-	
+
 	respondWithJSON(w, http.StatusNoContent, "")
 }
 
@@ -164,7 +164,7 @@ func (h *PlayerHandler) handleGetPlayerByID(w http.ResponseWriter, r *http.Reque
 	// Query params
 	matchType := r.URL.Query().Get("match_type")
 	if matchType != "indoor" && matchType != "beach" {
-		respondWithError(w, http.StatusBadRequest, "invalid match type", 
+		respondWithError(w, http.StatusBadRequest, "invalid match type",
 			fmt.Errorf("expected: `indoor` or `beach`, got: %s", matchType),
 		)
 		return
@@ -199,7 +199,7 @@ func (h *PlayerHandler) handleGetLeaderboard(w http.ResponseWriter, r *http.Requ
 	// Query params
 	matchType := r.URL.Query().Get("match_type")
 	if matchType != "indoor" && matchType != "beach" {
-		respondWithError(w, http.StatusBadRequest, "invalid match type", 
+		respondWithError(w, http.StatusBadRequest, "invalid match type",
 			fmt.Errorf("expected: `indoor` or `beach`, got: %s", matchType),
 		)
 		return
@@ -241,7 +241,7 @@ func (h *PlayerHandler) handleGetPlayerSeasonalMatches(w http.ResponseWriter, r 
 	// Query params
 	matchType := r.URL.Query().Get("match_type")
 	if matchType != "indoor" && matchType != "beach" {
-		respondWithError(w, http.StatusBadRequest, "invalid match type", 
+		respondWithError(w, http.StatusBadRequest, "invalid match type",
 			fmt.Errorf("expected: `indoor` or `beach`, got: %s", matchType),
 		)
 		return

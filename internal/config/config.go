@@ -9,12 +9,12 @@ import (
 )
 
 type Config struct {
-	DatabaseURL			string
-	Port				string
-	JWTSecret			string
-	JWTExpiryHours		int
-	RegistrationCode	string
-	FrontendURL			string
+	DatabaseURL      string
+	Port             string
+	JWTSecret        string
+	JWTExpiryHours   int
+	RegistrationCode string
+	FrontendURL      string
 }
 
 func Load() (*Config, error) {
@@ -28,12 +28,12 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		Port: os.Getenv("PORT"),
-		JWTSecret: os.Getenv("JWT_SECRET"),
-		JWTExpiryHours: expiryHours,
+		DatabaseURL:      os.Getenv("DATABASE_URL"),
+		Port:             os.Getenv("PORT"),
+		JWTSecret:        os.Getenv("JWT_SECRET"),
+		JWTExpiryHours:   expiryHours,
 		RegistrationCode: os.Getenv("REGISTRATION_CODE"),
-		FrontendURL: os.Getenv("FRONTEND_URL"),
+		FrontendURL:      os.Getenv("FRONTEND_URL"),
 	}
 
 	if cfg.DatabaseURL == "" {

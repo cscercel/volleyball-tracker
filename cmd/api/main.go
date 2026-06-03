@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -19,7 +20,6 @@ import (
 	_ "github.com/cscercel/volleyball-tracker/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
-
 
 // @title           Volleyball Tracker API
 // @version         2.0.0
@@ -100,8 +100,11 @@ func main() {
 
 	// Start server
 	srv := &http.Server{
-		Addr: ":" + cfg.Port,
+		Addr:    ":" + cfg.Port,
 		Handler: r,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
 	}
 
 	log.Printf("server running on port: %v", cfg.Port)

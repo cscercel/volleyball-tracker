@@ -13,7 +13,7 @@ import (
 )
 
 type MatchService struct {
-	queries	*db.Queries
+	queries *db.Queries
 }
 
 func NewMatchService(queries *db.Queries) *MatchService {
@@ -30,16 +30,16 @@ func (s *MatchService) addPlayerToMatch(
 
 	// Check if player has stats for match type & season
 	_, err := s.queries.GetPlayerStatsByID(ctx, db.GetPlayerStatsByIDParams{
-		PlayerID: player.ID,
+		PlayerID:  player.ID,
 		MatchType: match.MatchType,
-		Season: match.Season,
+		Season:    match.Season,
 	})
 	if err != nil {
 		if err == sql.ErrNoRows {
 			_, err = s.queries.UpsertPlayerStats(ctx, db.UpsertPlayerStatsParams{
-				PlayerID: player.ID,
+				PlayerID:  player.ID,
 				MatchType: match.MatchType,
-				Season: match.Season,
+				Season:    match.Season,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to initliaze stats for player: %w", err)
@@ -49,9 +49,9 @@ func (s *MatchService) addPlayerToMatch(
 	}
 
 	_, err = s.queries.AddPlayerToMatch(ctx, db.AddPlayerToMatchParams{
-		MatchID: match.ID,
+		MatchID:  match.ID,
 		PlayerID: player.ID,
-		Color: color,
+		Color:    color,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to add player to match: %w", err)
@@ -73,14 +73,14 @@ func (s *MatchService) CreateMatch(
 
 	// Check if player is in 2 teams
 	for i := range blue_team {
-			if slices.Contains(red_team, blue_team[i]) {
-				return db.Match{}, fmt.Errorf("`%s` cannot be in both `blue_team` and `red_team`", blue_team[i])
-			}
+		if slices.Contains(red_team, blue_team[i]) {
+			return db.Match{}, fmt.Errorf("`%s` cannot be in both `blue_team` and `red_team`", blue_team[i])
 		}
+	}
 
 	match, err := s.queries.CreateMatch(ctx, db.CreateMatchParams{
 		MatchType: match_type,
-		Season: int32(time.Now().UTC().Year()),
+		Season:    int32(time.Now().UTC().Year()),
 	})
 	if err != nil {
 		return db.Match{}, fmt.Errorf("failed to create match: %w", err)
@@ -125,7 +125,7 @@ func (s *MatchService) ListMatchesBySeason(
 ) ([]db.Match, error) {
 	matches, err := s.queries.ListMatchesBySeason(ctx, db.ListMatchesBySeasonParams{
 		MatchType: match_type,
-		Season: season,
+		Season:    season,
 	})
 	if err != nil {
 		return []db.Match{}, fmt.Errorf("failed to list seasonal matches: %w", err)
@@ -187,15 +187,15 @@ func (s *MatchService) RegisterMatch(
 
 	// Determine if Overtime game
 	is_otl := false
-	if math.Abs(float64(blue_score) - float64(red_score)) == 2 {
+	if math.Abs(float64(blue_score)-float64(red_score)) == 2 {
 		is_otl = true
 	}
-	
+
 	// Apply scores to match
 	match, err := s.queries.UpdateMatchScores(ctx, db.UpdateMatchScoresParams{
-		ID: matchID,
+		ID:        matchID,
 		BlueScore: blue_score,
-		RedScore: red_score,
+		RedScore:  red_score,
 	})
 	if err != nil {
 		return db.Match{}, fmt.Errorf("failed to update match scores: %w", err)
@@ -206,10 +206,10 @@ func (s *MatchService) RegisterMatch(
 	if err != nil {
 		return db.Match{}, fmt.Errorf("failed to load match players: %w", err)
 	}
-	
+
 	for _, player := range match_players {
 		var scored, conceded int32
-		
+
 		if player.Color == "blue" {
 			scored = blue_score
 			conceded = red_score
@@ -221,38 +221,38 @@ func (s *MatchService) RegisterMatch(
 		switch {
 		case player.Color == winner:
 			_, err := s.queries.UpdatePlayerStatsWin(ctx, db.UpdatePlayerStatsWinParams{
-				PlayerID: player.PlayerID,
+				PlayerID:  player.PlayerID,
 				MatchType: match.MatchType,
-				Season: match.Season,
-				Scored: scored,
-				Conceded: conceded,
+				Season:    match.Season,
+				Scored:    scored,
+				Conceded:  conceded,
 			})
 			if err != nil {
 				return db.Match{}, fmt.Errorf("failed to declare player as winner: %w", err)
 			}
 		case player.Color != winner && is_otl:
 			_, err := s.queries.UpdatePlayerStatsOtl(ctx, db.UpdatePlayerStatsOtlParams{
-				PlayerID: player.PlayerID,
+				PlayerID:  player.PlayerID,
 				MatchType: match.MatchType,
-				Season: match.Season,
-				Scored: scored,
-				Conceded: conceded,
+				Season:    match.Season,
+				Scored:    scored,
+				Conceded:  conceded,
 			})
 			if err != nil {
 				return db.Match{}, fmt.Errorf("failed to declare player as ot loser: %w", err)
 			}
 		default:
 			_, err := s.queries.UpdatePlayerStatsLoss(ctx, db.UpdatePlayerStatsLossParams{
-				PlayerID: player.PlayerID,
+				PlayerID:  player.PlayerID,
 				MatchType: match.MatchType,
-				Season: match.Season,
-				Scored: scored,
-				Conceded: conceded,
+				Season:    match.Season,
+				Scored:    scored,
+				Conceded:  conceded,
 			})
 			if err != nil {
 				return db.Match{}, fmt.Errorf("failed to declare player as loser: %w", err)
 			}
-			
+
 		}
 	}
 

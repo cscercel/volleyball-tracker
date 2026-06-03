@@ -1,10 +1,10 @@
 package auth
 
 import (
+	"errors"
 	"net/http/httptest"
 	"testing"
 	"time"
-	"errors"
 
 	"github.com/google/uuid"
 )
@@ -14,11 +14,11 @@ func TestValidateJWT(t *testing.T) {
 	validToken, _ := MakeJWT(userID, "secret", time.Hour)
 
 	tests := []struct {
-		name		string
-		tokenString	string
-		tokenSecret	string
-		wantUserID	uuid.UUID
-		wantErr		bool
+		name        string
+		tokenString string
+		tokenSecret string
+		wantUserID  uuid.UUID
+		wantErr     bool
 	}{
 		{
 			name:        "Valid token",
