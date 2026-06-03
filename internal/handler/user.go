@@ -11,7 +11,6 @@ import (
 
 type UserHandler struct {
 	service   *service.UserService
-	jwtSecret string
 }
 
 func NewUserHandler(service *service.UserService) *UserHandler {
