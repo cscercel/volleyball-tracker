@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0] - 2026.06.03
+
+### Added
+
+### Changed
+- Complete revamp of backend from a FastAPI app to an app written in Go
+- Complete revamp of frontend from a Streamlit app to a Svelte app
+- Changes made to schemas in the database (ids changed to UUID)
+- Removal of Match Odds & Team MVPs (will be added later as a seperate service)
+
+### Fixed
 
 ## [1.1.1] - 2026.04.03
 
