@@ -41,7 +41,7 @@ let loadingStats = $state(false)
                         } catch {
                             prevStats = null
                         }
-                } catch (e) {
+                } catch {
                     statsError = 'Failed to load player stats.'
                         stats = null
                 } finally {
@@ -105,11 +105,13 @@ async function handleDelete() {
         }
 }
 
-function delta(current: number, previous: number | null): string {
-    if (previous === null) return ''
-        const diff = current - previous
-            if (diff === 0) return ''
-                return diff > 0 ? `(+${diff})` : `(${diff})`
+function delta(current: number, previous: number | null): { text: string, type: 'positive' | 'negative' | 'neutral' } {
+    if (previous === null) return { text: '', type: 'neutral' }
+    const diff = current - previous
+        if (diff === 0) return { text: '±0', type: 'neutral' }
+    return diff > 0
+        ? { text: `+${diff}`, type: 'positive' }
+    : { text: `${diff}`, type: 'negative' }
 }
 
 function calculateMmr(avgPoints: number, efficiencyRate: number): number {
@@ -118,38 +120,34 @@ function calculateMmr(avgPoints: number, efficiencyRate: number): number {
 
 function getRank(played: number, points: number, efficiencyRate: number): string {
     if (played < 10) return 'Unranked'
-
         const avgPoints = played > 0 ? points / played : 0
             const mmr = calculateMmr(avgPoints, efficiencyRate)
-
             const ranks: [string, number, number][] = [
-            ['Iron I',      0,    0.1],
-            ['Iron II',     0.1,  0.2],
-            ['Iron III',    0.2,  0.3],
-            ['Bronze I',    0.3,  0.4],
-            ['Bronze II',   0.4,  0.5],
-            ['Bronze III',  0.5,  0.6],
-            ['Silver I',    0.6,  0.7],
-            ['Silver II',   0.7,  0.8],
-            ['Silver III',  0.8,  0.9],
-            ['Gold I',      0.9,  1.0],
-            ['Gold II',     1.0,  1.1],
-            ['Gold III',    1.1,  1.2],
-            ['Platinum I',  1.2,  1.3],
-            ['Platinum II', 1.3,  1.4],
-            ['Platinum III',1.4,  1.5],
-            ['Diamond I',   1.5,  1.6],
-            ['Diamond II',  1.6,  1.7],
-            ['Diamond III', 1.7,  1.8],
-            ['Spiker',      1.8,  1.9],
-            ['Ace',         1.9,  2.0],
-            ['Sensei',      2.0,  Infinity],
+            ['Iron I',       0,    0.1],
+            ['Iron II',      0.1,  0.2],
+            ['Iron III',     0.2,  0.3],
+            ['Bronze I',     0.3,  0.4],
+            ['Bronze II',    0.4,  0.5],
+            ['Bronze III',   0.5,  0.6],
+            ['Silver I',     0.6,  0.7],
+            ['Silver II',    0.7,  0.8],
+            ['Silver III',   0.8,  0.9],
+            ['Gold I',       0.9,  1.0],
+            ['Gold II',      1.0,  1.1],
+            ['Gold III',     1.1,  1.2],
+            ['Platinum I',   1.2,  1.3],
+            ['Platinum II',  1.3,  1.4],
+            ['Platinum III', 1.4,  1.5],
+            ['Diamond I',    1.5,  1.6],
+            ['Diamond II',   1.6,  1.7],
+            ['Diamond III',  1.7,  1.8],
+            ['Spiker',       1.8,  1.9],
+            ['Ace',          1.9,  2.0],
+            ['Sensei',       2.0,  Infinity],
             ]
-
                 for (const [name, low, high] of ranks) {
                     if (mmr >= low && mmr < high) return name
                 }
-
             return 'Iron I'
 }
 </script>
@@ -193,50 +191,35 @@ function getRank(played: number, points: number, efficiencyRate: number): string
 <p class="error">{statsError}</p>
 {:else if stats}
 <div class="stats-grid">
+{#each [
+    { label: 'Matches Played', value: stats.played, prev: prevStats?.played ?? null },
+        { label: 'Wins', value: stats.wins, prev: prevStats?.wins ?? null },
+        { label: 'Losses', value: stats.losses, prev: prevStats?.losses ?? null },
+        { label: 'OTL', value: stats.otl, prev: prevStats?.otl ?? null },
+        { label: 'Points', value: stats.points, prev: prevStats?.points ?? null },
+        { label: 'Win Rate', value: Math.round(stats.win_rate * 100), prev: prevStats ? Math.round(prevStats.win_rate * 100) : null, suffix: '%' },
+        { label: 'Win Streak', value: stats.streak, prev: null },
+        { label: 'Longest Streak', value: stats.longest_streak, prev: prevStats?.longest_streak ?? null },
+] as stat}
+{@const d = delta(stat.value, stat.prev)}
 <div class="stat-card">
-<span class="stat-label">Matches Played</span>
-<span class="stat-value">{stats.played} {delta(stats.played, prevStats?.played ?? null)}</span>
+<span class="stat-label">{stat.label}</span>
+<span class="stat-value">{stat.value}{stat.suffix ?? ''}</span>
+{#if d.text}
+<span class="stat-delta {d.type}">{d.text}</span>
+{/if}
 </div>
-<div class="stat-card">
-<span class="stat-label">Wins</span>
-<span class="stat-value">{stats.wins} {delta(stats.wins, prevStats?.wins ?? null)}</span>
-</div>
-<div class="stat-card">
-<span class="stat-label">Losses</span>
-<span class="stat-value">{stats.losses}</span>
-</div>
-<div class="stat-card">
-<span class="stat-label">OTL</span>
-<span class="stat-value">{stats.otl}</span>
-</div>
-<div class="stat-card">
-<span class="stat-label">Points</span>
-<span class="stat-value">{stats.points} {delta(stats.points, prevStats?.points ?? null)}</span>
-</div>
-<div class="stat-card">
-<span class="stat-label">Win Rate</span>
-<span class="stat-value">
-{(stats.win_rate * 100).toFixed(1)}%
-{delta(Math.round(stats.win_rate * 100), prevStats ? Math.round(prevStats.win_rate * 100) : null)}
-</span>
-</div>
-<div class="stat-card">
-<span class="stat-label">Win Streak</span>
-<span class="stat-value">{stats.streak}</span>
-</div>
-<div class="stat-card">
-<span class="stat-label">Longest Streak</span>
-<span class="stat-value">{stats.longest_streak} {delta(stats.longest_streak, prevStats?.longest_streak ?? null)}</span>
-</div>
+{/each}
 </div>
 
 <div class="rank-section">
-<h3>Rank: {getRank(stats.played, stats.points, stats.efficiency_rate)}</h3>
+<h3>Rank</h3>
 <img
 src={`/assets/${getRank(stats.played, stats.points, stats.efficiency_rate)}.png`}
 alt={getRank(stats.played, stats.points, stats.efficiency_rate)}
 width="160"
 />
+<p class="rank-name">{getRank(stats.played, stats.points, stats.efficiency_rate)}</p>
 </div>
 
 <div class="history">
@@ -368,27 +351,51 @@ gap: 1rem;
 display: flex;
          flex-direction: column;
 padding: 1rem;
-border: 1px solid #eee;
-        border-radius: 8px;
-background: #fafafa;
+         border-radius: 8px;
+background: #1a1a2e;
+border: 1px solid #2a2a3e;
 }
 
 .stat-label {
     font-size: 0.85rem;
-color: #666;
+color: #aaa;
        margin-bottom: 0.25rem;
 }
 
 .stat-value {
     font-size: 1.5rem;
     font-weight: 600;
+color: white;
 }
+
+.stat-delta {
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
+}
+
+.stat-delta.positive { color: #4caf50; }
+.stat-delta.negative { color: #f44336; }
+.stat-delta.neutral  { color: #888; }
 
 .rank-section {
 display: flex;
+         flex-direction: column;
          align-items: center;
-gap: 1rem;
-     margin-bottom: 2rem;
+         margin-bottom: 2rem;
+gap: 0.5rem;
+}
+
+.rank-section h3 {
+margin: 0;
+color: #444;
+}
+
+.rank-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+color: #ff6b35;
+margin: 0;
 }
 
 .history { margin-top: 1.5rem; }
@@ -401,8 +408,8 @@ padding: 0.5rem 1rem;
          margin-bottom: 0.5rem;
 }
 
-.win { background: #e8f5e9; }
-.otl { background: #fff8e1; }
+.win  { background: #e8f5e9; }
+.otl  { background: #fff8e1; }
 .loss { background: #fce4ec; }
 
 .form {
@@ -444,5 +451,5 @@ cursor: not-allowed;
 button.danger { background: #e53935; }
 
 .success { color: green; }
-.error { color: red; }
+.error   { color: red; }
 </style>

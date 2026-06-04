@@ -9,23 +9,53 @@ let season = $state(currentYear)
 let loading = $state(false)
     let error = $state('')
 
+    // Sorting
+    let sortColumn = $state('points')
+    let sortDir = $state<'asc' | 'desc'>('desc')
+
     async function fetchLeaderboard() {
         loading = true
             error = ''
             try {
                 leaderboard = await getLeaderboard(matchType, season)
-            } catch (e) {
+            } catch {
                 error = 'Failed to load leaderboard.'
             } finally {
                 loading = false
             }
     }
 
-// Fetch whenever matchType or season changes
 $effect(() => {
         matchType
         season
         fetchLeaderboard()
+        })
+
+function toggleSort(col: string) {
+    if (sortColumn === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc'
+    } else {
+        sortColumn = col
+            sortDir = 'desc'
+    }
+}
+
+function sortIcon(col: string): string {
+    if (sortColumn !== col) return '↕'
+        return sortDir === 'asc' ? '↑' : '↓'
+}
+
+const sorted = $derived(() => {
+        return [...leaderboard].sort((a, b) => {
+                const aVal = (a as any)[sortColumn]
+                const bVal = (b as any)[sortColumn]
+                if (typeof aVal === 'string') {
+                return sortDir === 'asc'
+                ? aVal.localeCompare(bVal)
+                : bVal.localeCompare(aVal)
+                }
+                return sortDir === 'asc' ? aVal - bVal : bVal - aVal
+                })
         })
 
 function calculateMmr(avgPoints: number, efficiencyRate: number): number {
@@ -74,13 +104,7 @@ function getRank(played: number, points: number, efficiencyRate: number): string
 <option value="indoor">Indoor</option>
 <option value="beach">Beach</option>
 </select>
-
-<input
-type="number"
-min="2023"
-max={currentYear}
-bind:value={season}
-/>
+<input type="number" min="2023" max={currentYear} bind:value={season} />
 </div>
 
 {#if loading}
@@ -94,18 +118,24 @@ bind:value={season}
 <thead>
 <tr>
 <th>#</th>
-<th>Player</th>
-<th>Played</th>
-<th>Wins</th>
-<th>Losses</th>
-<th>OTL</th>
-<th>Points</th>
-<th>Win Rate</th>
-<th>Rank</th>
+{#each [
+    { key: 'name', label: 'Player' },
+        { key: 'played', label: 'Played' },
+        { key: 'wins', label: 'Wins' },
+        { key: 'losses', label: 'Losses' },
+        { key: 'otl', label: 'OTL' },
+        { key: 'points', label: 'Points' },
+        { key: 'win_rate', label: 'Win Rate' },
+        { key: 'rank', label: 'Rank' },
+] as col}
+<th onclick={() => toggleSort(col.key)} class="sortable">
+{col.label} <span class="sort-icon">{sortIcon(col.key)}</span>
+</th>
+{/each}
 </tr>
 </thead>
 <tbody>
-{#each leaderboard as player, index}
+{#each sorted() as player, index}
 <tr>
 <td>{index + 1}</td>
 <td>{player.name}</td>
@@ -155,13 +185,27 @@ padding: 0.75rem 1rem;
 th {
     font-weight: 600;
 background: #1a1a2e;
+color: white;
+}
+
+th.sortable {
+cursor: pointer;
+        user-select: none;
+}
+
+th.sortable:hover {
+background: #2a2a3e;
+}
+
+.sort-icon {
+    font-size: 0.8rem;
+opacity: 0.7;
+         margin-left: 0.25rem;
 }
 
 tr:hover {
 background: #f5f5f5;
    }
 
-.error {
-color: red;
-}
+.error { color: red; }
 </style>
