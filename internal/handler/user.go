@@ -10,7 +10,7 @@ import (
 )
 
 type UserHandler struct {
-	service   *service.UserService
+	service *service.UserService
 }
 
 func NewUserHandler(service *service.UserService) *UserHandler {
