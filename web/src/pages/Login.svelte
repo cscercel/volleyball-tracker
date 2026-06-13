@@ -23,7 +23,7 @@ let loading = $state(false)
 
 <div class="page">
 <div class="login-card">
-<h1>🔐 Admin Login</h1>
+<h1>🔐 Admin </h1>
 
 {#if auth.isAuthenticated}
 <p class="success">✅ Logged in</p>
