@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.0.1] - 2026.06.13
+
+### Added
+
+### Changed
+- Fixed a visual bug on Login prompt where `Admin Login` was incorrectly parsed, replaced it to just `Admin`
+
+### Fixed
+
 ## [2.0.0] - 2026.06.03
 
 ### Added
