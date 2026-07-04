@@ -2,8 +2,8 @@ package pages
 
 import "github.com/cscercel/volleyball-tracker/web/templates"
 
-templ Register() {
-	@templates.Layout("Register", false) {
+templ Register(loggedIn bool) {
+	@templates.Layout("Register", loggedIn) {
 		<div class="page">
 			<div class="login-card">
 				<h1>Register</h1>

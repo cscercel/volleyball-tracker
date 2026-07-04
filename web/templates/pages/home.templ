@@ -8,15 +8,14 @@ import (
 )
 
 type LeaderboardRow struct {
-	Rank     int
-	Name     string
-	Played   int32
-	Wins     int32
-	Losses   int32
-	Otl      int32
-	Points   int32
-	WinRate  float64
-	RankTier string
+	Rank    int
+	Name    string
+	Played  int32
+	Wins    int32
+	Losses  int32
+	Otl     int32
+	Points  int32
+	WinRate float64
 }
 
 type LeaderboardData struct {
@@ -26,10 +25,11 @@ type LeaderboardData struct {
 	SortDir    string
 	Rows       []LeaderboardRow
 	Error      string
+    LoggedIn   bool
 }
 
 templ Home(data LeaderboardData) {
-	@templates.Layout("Home", true) {
+	@templates.Layout("Home", data.LoggedIn) {
 		<h1>Leaderboard</h1>
 		<form
 			class="filters"
@@ -69,7 +69,6 @@ templ LeaderboardTable(data LeaderboardData) {
 					@sortableHeader(data, "otl", "OTL")
 					@sortableHeader(data, "points", "Points")
 					@sortableHeader(data, "win_rate", "Win Rate")
-					@sortableHeader(data, "rank", "Rank")
 				</tr>
 			</thead>
 			<tbody>
@@ -83,7 +82,6 @@ templ LeaderboardTable(data LeaderboardData) {
 						<td>{ strconv.Itoa(int(row.Otl)) }</td>
 						<td>{ strconv.Itoa(int(row.Points)) }</td>
 						<td>{ fmt.Sprintf("%.1f%%", row.WinRate*100) }</td>
-						<td>{ row.RankTier }</td>
 					</tr>
 				}
 			</tbody>

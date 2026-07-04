@@ -10,28 +10,37 @@ import (
 
 const authCookieName = "auth_token"
 
-func setAuthCooke(w http.ResponseWriter, token string, expiresIn time.Duration, secure bool) {
+func setAuthCookie(w http.ResponseWriter, token string, expiresIn time.Duration, secure bool) {
 	http.SetCookie(w, &http.Cookie{
-		Name: authCookieName,
-		Value: token,
-		Path: "/",
+		Name:     authCookieName,
+		Value:    token,
+		Path:     "/",
 		HttpOnly: true,
-		Secure: secure,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
-		MaxAge: int(expiresIn.Seconds()),
+		MaxAge:   int(expiresIn.Seconds()),
 	})
 }
 
 func clearAuthCookie(w http.ResponseWriter, secure bool) {
 	http.SetCookie(w, &http.Cookie{
-		Name: authCookieName,
-		Value: "",
-		Path: "/",
+		Name:     authCookieName,
+		Value:    "",
+		Path:     "/",
 		HttpOnly: true,
-		Secure: secure,
-		SameSite: http.SameSiteDefaultMode,
-		MaxAge: -1, // deletes the cookie instant speed
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
 	})
+}
+
+func isAuthenticated(r *http.Request, jwtSecret string) bool {
+	cookie, err := r.Cookie(authCookieName)
+	if err != nil {
+		return false
+	}
+	_, err = auth.ValidateJWT(cookie.Value, jwtSecret)
+	return err == nil
 }
 
 func PageAuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {

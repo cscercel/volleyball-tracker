@@ -2,8 +2,8 @@ package pages
 
 import "github.com/cscercel/volleyball-tracker/web/templates"
 
-templ Login(errorMsg string) {
-	@templates.Layout("Login", false) {
+templ Login(errorMsg string, loggedIn bool) {
+	@templates.Layout("Login", loggedIn) {
 		<div class="page">
 			<div class="login-card">
 				<h1>Admin</h1>

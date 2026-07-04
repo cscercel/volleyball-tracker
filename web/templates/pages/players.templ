@@ -34,7 +34,6 @@ type ProfileData struct {
 	Error            string
 	HasStats         bool
 	Stats            []StatCard
-	RankTier         string
 	History          []HistoryRow
 }
 
@@ -133,10 +132,6 @@ templ ProfileTab(data ProfileData) {
 							}
 						</div>
 					}
-				</div>
-				<div class="rank-section">
-					<h3>Rank</h3>
-					<p class="rank-name">{ data.RankTier }</p>
 				</div>
 				<div class="history">
 					<h3>Match History</h3>

@@ -15,14 +15,17 @@ templ Layout(title string, loggedIn bool) {
 			></script>
 		</head>
 		<body>
-			if loggedIn {
-				<nav>
-					<a href="/">Home</a>
-					<a href="/players">Players</a>
-					<a href="/matches">Matches</a>
+			<nav>
+				<a href="/">Leaderboard</a>
+				<a href="/players">Players</a>
+				<a href="/matches">Matches</a>
+				if loggedIn {
+					<span class="nav-status">✅ Admin</span>
 					<button hx-post="/logout" hx-target="body">Log out</button>
-				</nav>
-			}
+				} else {
+					<a class="nav-status" href="/login">Login</a>
+				}
+			</nav>
 			<main>
 				{ children... }
 			</main>

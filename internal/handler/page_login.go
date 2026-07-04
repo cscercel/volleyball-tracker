@@ -8,7 +8,7 @@ import (
 )
 
 func (h *PageHandler) handleLoginPage(w http.ResponseWriter, r *http.Request) {
-	pages.Login("").Render(r.Context(), w)
+	pages.Login("", isAuthenticated(r, h.jwtSecret)).Render(r.Context(), w)
 }
 
 func (h *PageHandler) handleLoginSubmit(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func (h *PageHandler) handleLoginSubmit(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	setAuthCooke(w, user.Token, time.Hour, h.secureCookies)
+	setAuthCookie(w, user.Token, time.Hour, h.secureCookies)
 
 	w.Header().Set("HX-Redirect", "/")
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -20,24 +21,25 @@ func (h *PageHandler) handlePlayersPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	playerRows, err := h.playerService.ListPlayers(r.Context())
-	players := make([]pages.PlayerOption, 0, len(playerRows))
 	if err != nil {
-		for _, p := range playerRows {
-			players = append(players, pages.PlayerOption{ID: p.ID.String(), Name: p.Name})
-		}
+		log.Printf("handlePlayersPage: ListPlayers failed: %v", err)
+	}
+	players := make([]pages.PlayerOption, 0, len(playerRows))
+	for _, p := range playerRows {
+		players = append(players, pages.PlayerOption{ID: p.ID.String(), Name: p.Name})
 	}
 
 	data := pages.PlayersPageData{
 		ActiveTab: tab,
-		Players: players,
+		Players:   players,
 	}
 
 	switch tab {
 	case "profile":
-		data.Profile = h.buildProfileTabData(r ,q, players)
+		data.Profile = h.buildProfileTabData(r, q, players)
 	case "manage":
 		data.Manage = pages.ManageTabData{
-			Players: players,
+			Players:          players,
 			SelectedPlayerID: q.Get("player_id"),
 		}
 	case "add":
@@ -71,10 +73,10 @@ func (h *PageHandler) buildProfileTabData(
 	}
 
 	profile := pages.ProfileData{
-		Players: players,
+		Players:          players,
 		SelectedPlayerID: selectedID,
-		MatchType: matchType,
-		Season: season,
+		MatchType:        matchType,
+		Season:           season,
 	}
 
 	if selectedID == "" {
@@ -83,13 +85,13 @@ func (h *PageHandler) buildProfileTabData(
 
 	playerID, err := uuid.Parse(selectedID)
 	if err != nil {
-		profile.Error = "invalid player"
+		profile.Error = "Invalid player."
 		return profile
 	}
 
 	stats, err := h.playerService.GetPlayerByID(r.Context(), playerID, matchType, int32(season))
 	if err != nil {
-		profile.Error = "failed to load player stats"
+		profile.Error = "Failed to load player stats."
 		return profile
 	}
 
@@ -99,7 +101,6 @@ func (h *PageHandler) buildProfileTabData(
 	hasPrev := prevErr == nil
 
 	winRate := toFloat64(stats.WinRate)
-	efficiencyRate := toFloat64(stats.EfficiencyRate)
 
 	prevWinRatePct := 0
 	if hasPrev {
@@ -107,7 +108,6 @@ func (h *PageHandler) buildProfileTabData(
 	}
 
 	profile.HasStats = true
-	profile.RankTier = calculateRank(stats.Played, stats.Points, efficiencyRate)
 	profile.Stats = []pages.StatCard{
 		statCard("Matches Played", int(stats.Played), int(prevStats.Played), hasPrev, ""),
 		statCard("Wins", int(stats.Wins), int(prevStats.Wins), hasPrev, ""),
@@ -115,7 +115,7 @@ func (h *PageHandler) buildProfileTabData(
 		statCard("OTL", int(stats.Otl), int(prevStats.Otl), hasPrev, ""),
 		statCard("Points", int(stats.Points), int(prevStats.Points), hasPrev, ""),
 		statCard("Win Rate", int(winRate*100), prevWinRatePct, hasPrev, "%"),
-		statCard("Win Streak", int(stats.Streak), 0, false, ""),
+		statCard("Win Streak", int(stats.Streak), 0, false, ""), // old UI never showed a delta for streak
 		statCard("Longest Streak", int(stats.LongestStreak), int(prevStats.LongestStreak), hasPrev, ""),
 	}
 
@@ -176,11 +176,11 @@ func buildHistoryRow(m db.GetPlayerSeasonalMatchesRow) pages.HistoryRow {
 	}
 
 	return pages.HistoryRow{
-		Result: result,
+		Result:      result,
 		ResultClass: class,
-		Score: strconv.Itoa(int(myScore)) + " : " + strconv.Itoa(int(theirScore)),
-		Team: m.Color + " team",
-		Date: date,
+		Score:       strconv.Itoa(int(myScore)) + " : " + strconv.Itoa(int(theirScore)),
+		Team:        m.Color + " team",
+		Date:        date,
 	}
 }
 

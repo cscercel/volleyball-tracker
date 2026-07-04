@@ -7,7 +7,7 @@ import (
 )
 
 func (h *PageHandler) handleRegisterPage(w http.ResponseWriter, r *http.Request) {
-	pages.Register().Render(r.Context(), w)
+	pages.Register(isAuthenticated(r, h.jwtSecret)).Render(r.Context(), w)
 }
 
 func (h *PageHandler) handleRegisterSubmit(w http.ResponseWriter, r *http.Request) {
