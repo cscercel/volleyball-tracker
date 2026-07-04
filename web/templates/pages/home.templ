@@ -1,0 +1,124 @@
+package pages
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/cscercel/volleyball-tracker/web/templates"
+)
+
+type LeaderboardRow struct {
+	Rank     int
+	Name     string
+	Played   int32
+	Wins     int32
+	Losses   int32
+	Otl      int32
+	Points   int32
+	WinRate  float64
+	RankTier string
+}
+
+type LeaderboardData struct {
+	MatchType  string
+	Season     int
+	SortColumn string
+	SortDir    string
+	Rows       []LeaderboardRow
+	Error      string
+}
+
+templ Home(data LeaderboardData) {
+	@templates.Layout("Home", true) {
+		<h1>Leaderboard</h1>
+		<form
+			class="filters"
+			hx-get="/"
+			hx-target="#leaderboard-table"
+			hx-trigger="change"
+			hx-push-url="true"
+		>
+			<input type="hidden" name="sort" value={ data.SortColumn }/>
+			<input type="hidden" name="dir" value={ data.SortDir }/>
+			<select name="match_type">
+				<option value="indoor" selected?={ data.MatchType == "indoor" }>Indoor</option>
+				<option value="beach" selected?={ data.MatchType == "beach" }>Beach</option>
+			</select>
+			<input type="number" name="season" min="2023" value={ strconv.Itoa(data.Season) }/>
+		</form>
+		<div id="leaderboard-table">
+			@LeaderboardTable(data)
+		</div>
+	}
+}
+
+templ LeaderboardTable(data LeaderboardData) {
+	if data.Error != "" {
+		<p class="error">{ data.Error }</p>
+	} else if len(data.Rows) == 0 {
+		<p>No stats for { data.MatchType } in season { strconv.Itoa(data.Season) }.</p>
+	} else {
+		<table>
+			<thead>
+				<tr>
+					<th>#</th>
+					@sortableHeader(data, "name", "Player")
+					@sortableHeader(data, "played", "Played")
+					@sortableHeader(data, "wins", "Wins")
+					@sortableHeader(data, "losses", "Losses")
+					@sortableHeader(data, "otl", "OTL")
+					@sortableHeader(data, "points", "Points")
+					@sortableHeader(data, "win_rate", "Win Rate")
+					@sortableHeader(data, "rank", "Rank")
+				</tr>
+			</thead>
+			<tbody>
+				for _, row := range data.Rows {
+					<tr>
+						<td>{ strconv.Itoa(row.Rank) }</td>
+						<td>{ row.Name }</td>
+						<td>{ strconv.Itoa(int(row.Played)) }</td>
+						<td>{ strconv.Itoa(int(row.Wins)) }</td>
+						<td>{ strconv.Itoa(int(row.Losses)) }</td>
+						<td>{ strconv.Itoa(int(row.Otl)) }</td>
+						<td>{ strconv.Itoa(int(row.Points)) }</td>
+						<td>{ fmt.Sprintf("%.1f%%", row.WinRate*100) }</td>
+						<td>{ row.RankTier }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+templ sortableHeader(data LeaderboardData, column, label string) {
+	<th
+		class="sortable"
+		hx-get={ sortURL(data, column) }
+		hx-target="#leaderboard-table"
+		hx-push-url="true"
+	>
+		{ label } <span class="sort-icon">{ sortIcon(data, column) }</span>
+	</th>
+}
+
+func sortURL(data LeaderboardData, column string) string {
+	dir := "desc"
+	if data.SortColumn == column && data.SortDir == "desc" {
+		dir = "asc"
+	}
+	return fmt.Sprintf(
+		"/?match_type=%s&season=%d&sort=%s&dir=%s",
+		data.MatchType, data.Season, column, dir,
+	)
+}
+
+func sortIcon(data LeaderboardData, column string) string {
+	if data.SortColumn != column {
+		return "↕"
+	}
+	if data.SortDir == "asc" {
+		return "↑"
+	}
+	return "↓"
+}

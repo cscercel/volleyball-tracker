@@ -1,0 +1,170 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --accent: #ff6b35;
+
+  font: 18px/145% system-ui, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+h1 {
+  color: var(--text-h);
+  font-weight: 500;
+  font-size: 28px;
+  margin: 0 0 1.5rem;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+main {
+  padding: 1.5rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Login / Register cards, ported from the old Svelte styling */
+.page {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #1a1a2e;
+  color: #fff;
+  text-align: center;
+}
+
+.login-card h1 {
+  color: #fff;
+}
+
+.login-card .form,
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-card input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.login-card button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  font-size: 1rem;
+}
+
+.login-card button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-card a {
+  color: #c7c7e6;
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+.success {
+  color: #4ade80;
+}
+
+/* Leaderboard, ported from the old Home.svelte styling */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.filters select,
+.filters input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-weight: 600;
+  background: #1a1a2e;
+  color: white;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  background: #2a2a3e;
+}
+
+.sort-icon {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-left: 0.25rem;
+}
+
+tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}

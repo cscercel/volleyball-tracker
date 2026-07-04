@@ -1,0 +1,35 @@
+package pages
+
+import "github.com/cscercel/volleyball-tracker/web/templates"
+
+templ Register() {
+	@templates.Layout("Register", false) {
+		<div class="page">
+			<div class="login-card">
+				<h1>Register</h1>
+				<div class="form">
+					<form method="post" hx-post="/register" hx-target="#register-status" hx-swap="innerHTML">
+						<input type="email" name="email" placeholder="Email" required/>
+						<input type="password" name="password" placeholder="Password" required/>
+						<input type="text" name="registration_code" placeholder="Registration code" required/>
+						<button type="submit">Create account</button>
+					</form>
+				</div>
+				<div id="register-status">
+					@RegisterStatus("", false)
+				</div>
+				<p><a href="/login">Already have an account? Log in</a></p>
+			</div>
+		</div>
+	}
+}
+
+templ RegisterStatus(msg string, isSuccess bool) {
+	if msg != "" {
+		if isSuccess {
+			<p class="success">{ msg }</p>
+		} else {
+			<p class="error">{ msg }</p>
+		}
+	}
+}

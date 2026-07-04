@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	_ "github.com/lib/pq"
 
 	"github.com/cscercel/volleyball-tracker/internal/config"
@@ -64,17 +63,17 @@ func main() {
 	userService := service.NewUserService(queries, cfg.RegistrationCode, cfg.JWTSecret)
 	userHandler := handler.NewUserHandler(userService)
 
+	// Page handler
+	secureCookies := cfg.Env == "production"
+	pageHandler := handler.NewPageHandler(
+		userService, 
+		playerService,
+		cfg.JWTSecret, 
+		secureCookies,
+		)
+
 	// Routers
 	r := chi.NewRouter()
-
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{cfg.FrontendURL},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
-		MaxAge:           300,
-	}))
 
 	// Global middleware
 	r.Use(middleware.Logger)
@@ -83,12 +82,15 @@ func main() {
 	// Local middleware
 	authMiddleware := handler.AuthenticateMiddleware(cfg.JWTSecret)
 
-	// Routes
+	// JSON Routes
 	r.Route("/api/v1", func(r chi.Router) {
 		playerHandler.RegisterRoutes(r, authMiddleware)
 		matchHandler.RegisterRoutes(r, authMiddleware)
 		userHandler.RegisterRoutes(r, authMiddleware)
 	})
+
+	// HTMX Routes
+	pageHandler.RegisterRoutes(r)
 
 	// Small `Mandatory` test route
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
