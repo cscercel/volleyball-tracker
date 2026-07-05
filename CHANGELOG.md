@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0] - 2026.07.04
+
+### Added
+- Temporary removal of ranks, I will add them back in a later release once I figure out a better MMR system
+
+### Changed
+- Backend rewritten to service HTML snippets on templates instead of JSON data (old endpoints are still active)
+- Changed frontend from Svelte to HTMX
+- Removed emojis from website, no need for that
+
+### Fixed
+- Login page was not showing up properly again
+
 ## [2.0.1] - 2026.06.13
 
 ### Added

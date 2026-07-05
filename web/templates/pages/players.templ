@@ -55,27 +55,38 @@ type PlayersPageData struct {
 	Profile   ProfileData
 	Add       AddTabData
 	Manage    ManageTabData
+	LoggedIn  bool
+}
+
+templ LoginRequired(action string) {
+	<p>You must be <a href="/login">logged in</a> to { action }.</p>
 }
 
 templ Players(data PlayersPageData) {
-	@templates.Layout("Players", true) {
+	@templates.Layout("Players", data.LoggedIn) {
 		<h1>Players</h1>
-		<div class="tabs">
-			@tabButton(data.ActiveTab, "profile", "Player Profile")
-			@tabButton(data.ActiveTab, "add", "Add Player")
-			@tabButton(data.ActiveTab, "manage", "Manage Players")
-		</div>
-		<div id="tab-content">
-			@PlayersTabContent(data)
+		<div id="tab-section">
+			@PlayersBody(data)
 		</div>
 	}
+}
+
+templ PlayersBody(data PlayersPageData) {
+	<div class="tabs">
+		@tabButton(data.ActiveTab, "profile", "Player Profile")
+		@tabButton(data.ActiveTab, "add", "Add Player")
+		@tabButton(data.ActiveTab, "manage", "Manage Players")
+	</div>
+	<div id="tab-content">
+		@PlayersTabContent(data)
+	</div>
 }
 
 templ tabButton(activeTab, tab, label string) {
 	<button
 		class={ "tab-button", templ.KV("active", activeTab == tab) }
 		hx-get={ "/players?tab=" + tab }
-		hx-target="#tab-content"
+		hx-target="#tab-section"
 		hx-push-url="true"
 	>
 		{ label }
@@ -85,9 +96,17 @@ templ tabButton(activeTab, tab, label string) {
 templ PlayersTabContent(data PlayersPageData) {
 	switch data.ActiveTab {
 		case "add":
-			@AddTab(data.Add)
+			if data.LoggedIn {
+				@AddTab(data.Add)
+			} else {
+				@LoginRequired("add players")
+			}
 		case "manage":
-			@ManageTab(data.Manage)
+			if data.LoggedIn {
+				@ManageTab(data.Manage)
+			} else {
+				@LoginRequired("manage players")
+			}
 		default:
 			@ProfileTab(data.Profile)
 	}
@@ -101,7 +120,7 @@ templ ProfileTab(data ProfileData) {
 			<form
 				class="filters"
 				hx-get="/players?tab=profile"
-				hx-target="#tab-content"
+				hx-target="#tab-section"
 				hx-trigger="change"
 				hx-push-url="true"
 			>
@@ -177,7 +196,7 @@ templ ManageTab(data ManageTabData) {
 		} else {
 			<select
 				hx-get="/players?tab=manage"
-				hx-target="#tab-content"
+				hx-target="#tab-section"
 				hx-trigger="change"
 				hx-push-url="true"
 				name="player_id"
@@ -198,7 +217,7 @@ templ ManageTab(data ManageTabData) {
 						</form>
 					</div>
 					<div class="danger-zone">
-						<h3>Delete</h3>
+						<h3>🗑️ Delete</h3>
 						<p>This will permanently delete this player.</p>
 						<form hx-post="/players/delete" hx-target="#manage-tab" hx-swap="outerHTML">
 							<input type="hidden" name="player_id" value={ data.SelectedPlayerID }/>

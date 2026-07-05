@@ -32,6 +32,7 @@ func (h *PageHandler) handlePlayersPage(w http.ResponseWriter, r *http.Request) 
 	data := pages.PlayersPageData{
 		ActiveTab: tab,
 		Players:   players,
+		LoggedIn:  isAuthenticated(r, h.jwtSecret),
 	}
 
 	switch tab {
@@ -46,7 +47,7 @@ func (h *PageHandler) handlePlayersPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Header.Get("HX-Request") == "true" {
-		pages.PlayersTabContent(data).Render(r.Context(), w)
+		pages.PlayersBody(data).Render(r.Context(), w)
 		return
 	}
 	pages.Players(data).Render(r.Context(), w)

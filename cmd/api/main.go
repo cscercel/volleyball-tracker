@@ -68,6 +68,7 @@ func main() {
 	pageHandler := handler.NewPageHandler(
 		userService, 
 		playerService,
+		matchService,
 		cfg.JWTSecret, 
 		secureCookies,
 		)

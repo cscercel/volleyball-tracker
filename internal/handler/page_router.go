@@ -13,19 +13,22 @@ import (
 type PageHandler struct {
 	userService   *service.UserService
 	playerService *service.PlayerService
+	matchService  *service.MatchService
 	jwtSecret     string
 	secureCookies bool
 }
 
 func NewPageHandler(
-	userService *service.UserService, 
-	playerService *service.PlayerService, 
-	jwtSecret string, 
+	userService *service.UserService,
+	playerService *service.PlayerService,
+	matchService *service.MatchService,
+	jwtSecret string,
 	secureCookies bool,
 ) *PageHandler {
 	return &PageHandler{
 		userService:   userService,
 		playerService: playerService,
+		matchService:  matchService,
 		jwtSecret:     jwtSecret,
 		secureCookies: secureCookies,
 	}
@@ -39,18 +42,26 @@ func (h *PageHandler) RegisterRoutes(r chi.Router) {
 	fileServer := http.FileServer(http.FS(staticSub))
 	r.Handle("/static/*", http.StripPrefix("/static/", fileServer))
 
+	// Public page routes
 	r.Get("/", h.handleHomePage)
 	r.Get("/login", h.handleLoginPage)
 	r.Post("/login", h.handleLoginSubmit)
 	r.Post("/logout", h.handleLogout)
 	r.Get("/register", h.handleRegisterPage)
 	r.Post("/register", h.handleRegisterSubmit)
+	r.Get("/players", h.handlePlayersPage)
+	r.Get("/matches", h.handleMatchesPage)
 
+	// Protected: only actions that mutate data require login.
 	r.Group(func(r chi.Router) {
 		r.Use(PageAuthMiddleware(h.jwtSecret))
-		r.Get("/players", h.handlePlayersPage)
 		r.Post("/players/add", h.handleAddPlayerSubmit)
 		r.Post("/players/rename", h.handleRenamePlayerSubmit)
 		r.Post("/players/delete", h.handleDeletePlayerSubmit)
+
+		r.Post("/matches/create/update", h.handleCreateTeamUpdate)
+		r.Post("/matches/create/submit", h.handleCreateMatchSubmit)
+		r.Post("/matches/drafts/submit", h.handleDraftSubmit)
+		r.Post("/matches/drafts/delete", h.handleDraftDelete)
 	})
 }

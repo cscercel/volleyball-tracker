@@ -318,3 +318,145 @@ button:disabled {
 button.danger {
   background: #e53935;
 }
+
+.pill-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pill {
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  color: #444;
+}
+
+.pill-active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.team {
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.team h3 {
+  margin: 0 0 0.75rem 0;
+  color: white;
+}
+
+.blue-team {
+  background: #0d2b5e;
+  border-color: #0d2b5e;
+}
+
+.red-team {
+  background: #6b0d0d;
+  border-color: #6b0d0d;
+}
+
+.blue-team p,
+.red-team p {
+  color: #ddd;
+  margin: 0.25rem 0;
+}
+
+.team-players {
+  min-height: 60px;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.team-players form {
+  margin: 0;
+}
+
+.empty {
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.player-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.remove {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.remove:hover {
+  color: white;
+}
+
+.team select {
+  width: 100%;
+  padding: 0.4rem;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.match-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.match-header {
+  display: flex;
+  gap: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-h);
+}
+
+.submit-results {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.court-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.court-svg {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 8px;
+}

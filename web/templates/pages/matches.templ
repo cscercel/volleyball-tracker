@@ -1,0 +1,433 @@
+package pages
+
+import (
+    "fmt"
+	"strconv"
+
+	"github.com/cscercel/volleyball-tracker/web/templates"
+)
+
+type CreateTabData struct {
+	MatchType        string
+	DraftType        string
+	BlueTeam         []string
+	RedTeam          []string
+	Available        []PlayerOption
+	NotEnoughPlayers bool
+	Error            string
+	Success          string
+	ResultBlue       []string
+	ResultRed        []string
+	LoggedIn         bool
+	HasCourt         bool
+	Court            CourtData
+}
+
+type CourtPlayer struct {
+	Name string
+	CX   float64
+	CY   float64
+}
+
+type CourtData struct {
+	BluePlayers []CourtPlayer
+	RedPlayers  []CourtPlayer
+	BlueBench   []string
+	RedBench    []string
+	BallX       float64
+	BallY       float64
+}
+
+type DraftMatch struct {
+	ID         string
+	MatchType  string
+	BlueRoster []string
+	RedRoster  []string
+}
+
+type DraftsTabData struct {
+	Matches  []DraftMatch
+	Error    string
+	LoggedIn bool
+}
+
+type CompletedMatch struct {
+	ID         string
+	MatchType  string
+	BlueScore  int32
+	RedScore   int32
+	IsOtl      bool
+	Winner     string
+	Date       string
+	BlueRoster []string
+	RedRoster  []string
+}
+
+type CompletedTabData struct {
+	MatchType string
+	Season    int
+	Matches   []CompletedMatch
+	Error     string
+}
+
+type MatchesPageData struct {
+	ActiveTab string
+	Create    CreateTabData
+	Drafts    DraftsTabData
+	Completed CompletedTabData
+	LoggedIn  bool
+}
+
+templ Matches(data MatchesPageData) {
+	@templates.Layout("Matches", data.LoggedIn) {
+		<h1>Matches</h1>
+		<div id="tab-section">
+			@MatchesBody(data)
+		</div>
+	}
+}
+
+templ MatchesBody(data MatchesPageData) {
+	<div class="tabs">
+		@matchesTabButton(data.ActiveTab, "create", "Create Match")
+		@matchesTabButton(data.ActiveTab, "drafts", "Draft Matches")
+		@matchesTabButton(data.ActiveTab, "completed", "Completed Matches")
+	</div>
+	<div id="tab-content">
+		@MatchesTabContent(data)
+	</div>
+}
+
+templ matchesTabButton(activeTab, tab, label string) {
+	<button
+		class={ "tab-button", templ.KV("active", activeTab == tab) }
+		hx-get={ "/matches?tab=" + tab }
+		hx-target="#tab-section"
+		hx-push-url="true"
+	>
+		{ label }
+	</button>
+}
+
+templ MatchesTabContent(data MatchesPageData) {
+	switch data.ActiveTab {
+		case "drafts":
+			@DraftsTab(data.Drafts)
+		case "completed":
+			@CompletedTab(data.Completed)
+		default:
+			@CreateTab(data.Create)
+	}
+}
+
+templ CreateTab(data CreateTabData) {
+	<div class="tab-content" id="create-tab">
+		<h2>Create New Match</h2>
+		if data.NotEnoughPlayers {
+			<p>Need at least 2 players to create a match.</p>
+		} else if !data.LoggedIn {
+			@LoginRequired("create matches")
+		} else {
+			<form
+				class="filters"
+				hx-post="/matches/create/update"
+				hx-target="#create-tab"
+				hx-swap="outerHTML"
+				hx-trigger="change"
+			>
+				<input type="hidden" name="blue" value={ joinNames(data.BlueTeam) }/>
+				<input type="hidden" name="red" value={ joinNames(data.RedTeam) }/>
+				<div class="pill-group">
+					<span>Match Type</span>
+					<button
+						type="submit"
+						name="match_type"
+						value="indoor"
+						class={ "pill", templ.KV("pill-active", data.MatchType == "indoor") }
+					>Indoor</button>
+					<button
+						type="submit"
+						name="match_type"
+						value="beach"
+						class={ "pill", templ.KV("pill-active", data.MatchType == "beach") }
+					>Beach</button>
+				</div>
+				<div class="pill-group">
+					<span>Draft Type</span>
+					<button
+						type="submit"
+						name="draft_type"
+						value="random"
+						class={ "pill", templ.KV("pill-active", data.DraftType == "random") }
+					>Random</button>
+					<button
+						type="submit"
+						name="draft_type"
+						value="manual"
+						class={ "pill", templ.KV("pill-active", data.DraftType == "manual") }
+					>Manual</button>
+				</div>
+			</form>
+
+			<div class="teams">
+				@teamBuilderColumn("Blue Team", "blue-team", "add_blue", "remove_blue", data)
+				@teamBuilderColumn("Red Team", "red-team", "add_red", "remove_red", data)
+			</div>
+
+			<form hx-post="/matches/create/submit" hx-target="#create-tab" hx-swap="outerHTML">
+				<input type="hidden" name="match_type" value={ data.MatchType }/>
+				<input type="hidden" name="draft_type" value={ data.DraftType }/>
+				<input type="hidden" name="blue" value={ joinNames(data.BlueTeam) }/>
+				<input type="hidden" name="red" value={ joinNames(data.RedTeam) }/>
+				<button type="submit">Create Match</button>
+			</form>
+
+			if data.Success != "" {
+				<p class="success">{ data.Success }</p>
+			}
+			if data.Error != "" {
+				<p class="error">{ data.Error }</p>
+			}
+
+			if len(data.ResultBlue) > 0 || len(data.ResultRed) > 0 {
+				<div class="teams">
+					<div class="team result blue-team">
+						<h3>Blue Team</h3>
+						for _, name := range data.ResultBlue {
+							<p>{ name }</p>
+						}
+					</div>
+					<div class="team result red-team">
+						<h3>Red Team</h3>
+						for _, name := range data.ResultRed {
+							<p>{ name }</p>
+						}
+					</div>
+				</div>
+                if data.HasCourt {
+					@Court(data.Court)
+				}
+			}
+		}
+	</div>
+}
+
+templ teamBuilderColumn(heading, colorClass, addField, removeField string, data CreateTabData) {
+	<div class={ "team", colorClass }>
+		<h3>{ heading }</h3>
+		<div class="team-players">
+			if len(teamFor(data, colorClass)) == 0 {
+				<p class="empty">No players added yet</p>
+			} else {
+				for _, name := range teamFor(data, colorClass) {
+					<form hx-post="/matches/create/update" hx-target="#create-tab" hx-swap="outerHTML">
+						<input type="hidden" name="match_type" value={ data.MatchType }/>
+						<input type="hidden" name="draft_type" value={ data.DraftType }/>
+						<input type="hidden" name="blue" value={ joinNames(data.BlueTeam) }/>
+						<input type="hidden" name="red" value={ joinNames(data.RedTeam) }/>
+						<div class="player-tag">
+							<span>{ name }</span>
+							<button type="submit" name={ removeField } value={ name } class="remove">✕</button>
+						</div>
+					</form>
+				}
+			}
+		</div>
+		<form hx-post="/matches/create/update" hx-target="#create-tab" hx-swap="outerHTML" hx-trigger="change">
+			<input type="hidden" name="match_type" value={ data.MatchType }/>
+			<input type="hidden" name="draft_type" value={ data.DraftType }/>
+			<input type="hidden" name="blue" value={ joinNames(data.BlueTeam) }/>
+			<input type="hidden" name="red" value={ joinNames(data.RedTeam) }/>
+			<select name={ addField }>
+				<option value="">Add a player...</option>
+				for _, p := range data.Available {
+					<option value={ p.Name }>{ p.Name }</option>
+				}
+			</select>
+		</form>
+	</div>
+}
+
+func teamFor(data CreateTabData, colorClass string) []string {
+	if colorClass == "blue-team" {
+		return data.BlueTeam
+	}
+	return data.RedTeam
+}
+
+func joinNames(names []string) string {
+	out := ""
+	for i, n := range names {
+		if i > 0 {
+			out += ","
+		}
+		out += n
+	}
+	return out
+}
+
+templ DraftsTab(data DraftsTabData) {
+	<div class="tab-content" id="drafts-tab">
+		<h2>Draft Matches</h2>
+		if data.Error != "" {
+			<p class="error">{ data.Error }</p>
+		}
+		if len(data.Matches) == 0 {
+			<p>No draft matches. Create one in the Create Match tab!</p>
+		} else {
+			for _, m := range data.Matches {
+				<div class="match-card">
+					<div class="match-header">
+						<span>Match { m.ID[:8] }</span>
+						<span>{ upper(m.MatchType) }</span>
+					</div>
+					<div class="teams">
+						<div class="team blue-team">
+							<h3>Blue Team</h3>
+							for _, name := range m.BlueRoster {
+								<p>{ name }</p>
+							}
+						</div>
+						<div class="team red-team">
+							<h3>Red Team</h3>
+							for _, name := range m.RedRoster {
+								<p>{ name }</p>
+							}
+						</div>
+					</div>
+					if data.LoggedIn {
+						<form class="submit-results" hx-post="/matches/drafts/submit" hx-target="#drafts-tab" hx-swap="outerHTML">
+							<input type="hidden" name="match_id" value={ m.ID }/>
+							<input type="number" name="blue_score" placeholder="Blue score" required/>
+							<input type="number" name="red_score" placeholder="Red score" required/>
+							<button type="submit">Submit Results</button>
+						</form>
+						<form hx-post="/matches/drafts/delete" hx-target="#drafts-tab" hx-swap="outerHTML">
+							<input type="hidden" name="match_id" value={ m.ID }/>
+							<button type="submit" class="danger">Delete Draft</button>
+						</form>
+					}
+				</div>
+			}
+		}
+	</div>
+}
+
+templ CompletedTab(data CompletedTabData) {
+	<div class="tab-content" id="completed-tab">
+		<h2>Completed Matches</h2>
+		<form
+			class="filters"
+			hx-get="/matches?tab=completed"
+			hx-target="#tab-section"
+			hx-trigger="change"
+			hx-push-url="true"
+		>
+			<select name="match_type">
+				<option value="indoor" selected?={ data.MatchType == "indoor" }>Indoor</option>
+				<option value="beach" selected?={ data.MatchType == "beach" }>Beach</option>
+			</select>
+			<input type="number" name="season" min="2023" value={ strconv.Itoa(data.Season) }/>
+		</form>
+		if data.Error != "" {
+			<p class="error">{ data.Error }</p>
+		} else if len(data.Matches) == 0 {
+			<p>No completed matches for this filter.</p>
+		} else {
+			for _, m := range data.Matches {
+				<div class="match-card">
+					<div class="match-header">
+						<span>
+							if m.Winner == "blue" {
+								BLUE
+							} else {
+								RED
+							}
+							{ strconv.Itoa(int(m.BlueScore)) } – { strconv.Itoa(int(m.RedScore)) }
+							if m.IsOtl {
+								OT
+							}
+						</span>
+						<span>{ upper(m.MatchType) }</span>
+						<span>{ m.Date }</span>
+					</div>
+					<div class="teams">
+						<div class="team blue-team">
+							<h3>Blue — { strconv.Itoa(int(m.BlueScore)) }</h3>
+							for _, name := range m.BlueRoster {
+								<p>{ name }</p>
+							}
+						</div>
+						<div class="team red-team">
+							<h3>Red — { strconv.Itoa(int(m.RedScore)) }</h3>
+							for _, name := range m.RedRoster {
+								<p>{ name }</p>
+							}
+						</div>
+					</div>
+				</div>
+			}
+		}
+	</div>
+}
+
+func upper(s string) string {
+	out := []rune(s)
+	for i, r := range out {
+		if r >= 'a' && r <= 'z' {
+			out[i] = r - 32
+		}
+	}
+	return string(out)
+}
+
+const (
+	courtW = 450.0
+	courtH = 270.0
+)
+
+func f(v float64) string {
+	return strconv.FormatFloat(v, 'f', 1, 64)
+}
+
+func benchX(i, total int, fromRight bool) float64 {
+	denom := float64(total - 1)
+	if denom < 1 {
+		denom = 1
+	}
+	offset := (float64(i) / denom) * (courtW * 0.35)
+	if fromRight {
+		return courtW - offset
+	}
+	return offset
+}
+
+templ Court(data CourtData) {
+	<div class="court-wrapper">
+		<svg viewBox={ fmt.Sprintf("-40 -20 %s %s", f(courtW+80), f(courtH+70)) } xmlns="http://www.w3.org/2000/svg" class="court-svg">
+			<rect x="-40" y="-20" width={ f(courtW + 80) } height={ f(courtH + 70) } fill="bisque"></rect>
+			<rect x="0" y="0" width={ f(courtW) } height={ f(courtH) } fill="bisque" stroke="darkred" stroke-width="3"></rect>
+			<line x1={ f(courtW / 2) } y1="0" x2={ f(courtW / 2) } y2={ f(courtH) } stroke="black" stroke-width="3" stroke-dasharray="10,6"></line>
+			<line x1={ f(3 * courtW / 9) } y1="0" x2={ f(3 * courtW / 9) } y2={ f(courtH) } stroke="darkred" stroke-width="2" stroke-dasharray="8,5" opacity="0.5"></line>
+			<line x1={ f(6 * courtW / 9) } y1="0" x2={ f(6 * courtW / 9) } y2={ f(courtH) } stroke="darkred" stroke-width="2" stroke-dasharray="8,5" opacity="0.5"></line>
+			for _, p := range data.BluePlayers {
+				<circle cx={ f(p.CX) } cy={ f(p.CY) } r="18" fill="blue" opacity="0.25"></circle>
+				<text x={ f(p.CX) } y={ f(p.CY) } text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="bold" fill="black">{ p.Name }</text>
+			}
+			for _, p := range data.RedPlayers {
+				<circle cx={ f(p.CX) } cy={ f(p.CY) } r="18" fill="red" opacity="0.25"></circle>
+				<text x={ f(p.CX) } y={ f(p.CY) } text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="bold" fill="black">{ p.Name }</text>
+			}
+			<circle cx={ f(data.BallX) } cy={ f(data.BallY) } r="10" fill="yellow" stroke="darkblue" stroke-width="2"></circle>
+			for i, name := range data.BlueBench {
+				<text x={ f(benchX(i, len(data.BlueBench), false)) } y={ f(courtH + 30) } text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="bold" fill="blue">{ name }</text>
+			}
+			for i, name := range data.RedBench {
+				<text x={ f(benchX(i, len(data.RedBench), true)) } y={ f(courtH + 30) } text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="bold" fill="red">{ name }</text>
+			}
+			if len(data.BlueBench) > 0 || len(data.RedBench) > 0 {
+				<text x={ f(courtW / 2) } y={ f(courtH + 30) } text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#666">— bench —</text>
+			}
+		</svg>
+	</div>
+}
