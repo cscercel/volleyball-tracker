@@ -217,7 +217,7 @@ templ ManageTab(data ManageTabData) {
 						</form>
 					</div>
 					<div class="danger-zone">
-						<h3>🗑️ Delete</h3>
+						<h3>Delete</h3>
 						<p>This will permanently delete this player.</p>
 						<form hx-post="/players/delete" hx-target="#manage-tab" hx-swap="outerHTML">
 							<input type="hidden" name="player_id" value={ data.SelectedPlayerID }/>

@@ -47,7 +47,7 @@ func Layout(title string, loggedIn bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if loggedIn {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<span class=\"nav-status\">✅ Admin</span> <button hx-post=\"/logout\" hx-target=\"body\">Log out</button>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<span class=\"nav-status\">Admin</span> <button hx-post=\"/logout\" hx-target=\"body\">Log out</button>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
