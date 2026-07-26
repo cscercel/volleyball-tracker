@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.1] - 2026.07.26
+
+### Added
+- Added `Dockerfile`
+
+### Changed
+- Removed trailing icons
+
+### Fixed
+
 ## [2.1.0] - 2026.07.04
 
 ### Added
