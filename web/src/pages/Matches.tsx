@@ -99,7 +99,7 @@ export default function Matches() {
     try {
       const match = await createMatch(matchType, finalBlue, finalRed)
       setCreatedMatchRoster(await getMatchRoster(match.id))
-      setCreateSuccess('✅ Match created!')
+      setCreateSuccess('Match created!')
       setBlueTeam([])
       setRedTeam([])
     } catch {
@@ -208,7 +208,7 @@ export default function Matches() {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight text-slate-900">
-        🏐 Matches
+        Matches
       </h1>
 
       <div className="mb-6 flex gap-1 border-b border-slate-200">
@@ -239,7 +239,7 @@ export default function Matches() {
         <div>
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Create New Match</h2>
           {players.length < 2 ? (
-            <p className="text-sm text-slate-500">⚠️ Need at least 2 players to create a match.</p>
+            <p className="text-sm text-slate-500">Need at least 2 players to create a match.</p>
           ) : !auth.isAuthenticated ? (
             <p className="text-sm text-slate-500">
               You must be{' '}
@@ -289,7 +289,7 @@ export default function Matches() {
 
               <div className="mb-4 grid grid-cols-2 gap-4">
                 <div className="rounded-xl border border-blue-900 bg-blue-950 p-4">
-                  <h3 className="mb-3 font-semibold text-white">🔵 Blue Team</h3>
+                  <h3 className="mb-3 font-semibold text-white">Blue Team</h3>
                   <div className="mb-3 flex min-h-[60px] flex-wrap gap-2">
                     {blueTeam.length === 0 ? (
                       <p className="text-sm italic text-white/40">No players added yet</p>
@@ -316,7 +316,7 @@ export default function Matches() {
                       setBlueSelected(e.target.value)
                       addToBlue(e.target.value)
                     }}
-                    className="w-full rounded-lg px-2 py-1.5 text-sm text-slate-800"
+                    className="w-full rounded-lg px-2 py-1.5 text-sm text-white"
                   >
                     <option value="">Add a player...</option>
                     {availableForBlue.map((p) => (
@@ -328,7 +328,7 @@ export default function Matches() {
                 </div>
 
                 <div className="rounded-xl border border-red-900 bg-red-950 p-4">
-                  <h3 className="mb-3 font-semibold text-white">🔴 Red Team</h3>
+                  <h3 className="mb-3 font-semibold text-white">Red Team</h3>
                   <div className="mb-3 flex min-h-[60px] flex-wrap gap-2">
                     {redTeam.length === 0 ? (
                       <p className="text-sm italic text-white/40">No players added yet</p>
@@ -355,7 +355,7 @@ export default function Matches() {
                       setRedSelected(e.target.value)
                       addToRed(e.target.value)
                     }}
-                    className="w-full rounded-lg px-2 py-1.5 text-sm text-slate-800"
+                    className="w-full rounded-lg px-2 py-1.5 text-sm text-white"
                   >
                     <option value="">Add a player...</option>
                     {availableForRed.map((p) => (
@@ -381,7 +381,7 @@ export default function Matches() {
                 <>
                   <div className="mt-4 grid grid-cols-2 gap-4">
                     <div className="rounded-xl bg-blue-950 p-4">
-                      <h3 className="mb-2 font-semibold text-white">🔵 Blue Team</h3>
+                      <h3 className="mb-2 font-semibold text-white">Blue Team</h3>
                       {createdBluePlayers.map((p) => (
                         <p key={p} className="text-sm text-white/80">
                           {p}
@@ -389,7 +389,7 @@ export default function Matches() {
                       ))}
                     </div>
                     <div className="rounded-xl bg-red-950 p-4">
-                      <h3 className="mb-2 font-semibold text-white">🔴 Red Team</h3>
+                      <h3 className="mb-2 font-semibold text-white">Red Team</h3>
                       {createdRedPlayers.map((p) => (
                         <p key={p} className="text-sm text-white/80">
                           {p}
@@ -433,7 +433,7 @@ export default function Matches() {
 
                     <div className="mb-3 grid grid-cols-2 gap-4">
                       <div className="rounded-xl bg-blue-950 p-4">
-                        <h3 className="mb-2 font-semibold text-white">🔵 Blue Team</h3>
+                        <h3 className="mb-2 font-semibold text-white">Blue Team</h3>
                         {blue.map((p) => (
                           <p key={p.player_id} className="text-sm text-white/80">
                             {p.player_name}
@@ -441,7 +441,7 @@ export default function Matches() {
                         ))}
                       </div>
                       <div className="rounded-xl bg-red-950 p-4">
-                        <h3 className="mb-2 font-semibold text-white">🔴 Red Team</h3>
+                        <h3 className="mb-2 font-semibold text-white">Red Team</h3>
                         {red.map((p) => (
                           <p key={p.player_id} className="text-sm text-white/80">
                             {p.player_name}
@@ -541,8 +541,8 @@ export default function Matches() {
                   >
                     <div className="mb-3 flex flex-wrap gap-4 text-sm font-medium text-slate-500">
                       <span>
-                        {winner === 'blue' ? '🔵' : '🔴'} {match.blue_score} – {match.red_score}{' '}
-                        {isOtl ? '⏱️ OT' : ''}
+                        {winner === 'blue' ? 'BLUE' : 'RED'} {match.blue_score} – {match.red_score}{' '}
+                        {isOtl ? 'OT' : ''}
                       </span>
                       <span>{match.match_type.toUpperCase()}</span>
                       <span>{match.created_at.slice(0, 10)}</span>
@@ -551,7 +551,7 @@ export default function Matches() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="rounded-xl bg-blue-950 p-4">
                         <h3 className="mb-2 font-semibold text-white">
-                          🔵 Blue — {match.blue_score}
+                          Blue — {match.blue_score}
                         </h3>
                         {blue.map((p) => (
                           <p key={p.player_id} className="text-sm text-white/80">
@@ -561,7 +561,7 @@ export default function Matches() {
                       </div>
                       <div className="rounded-xl bg-red-950 p-4">
                         <h3 className="mb-2 font-semibold text-white">
-                          🔴 Red — {match.red_score}
+                          Red — {match.red_score}
                         </h3>
                         {red.map((p) => (
                           <p key={p.player_id} className="text-sm text-white/80">

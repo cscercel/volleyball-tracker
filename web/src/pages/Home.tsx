@@ -82,7 +82,7 @@ export default function Home() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          🏆 Leaderboard
+          Leaderboard
         </h1>
 
         <div className="flex gap-3">

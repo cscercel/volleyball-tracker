@@ -13,7 +13,6 @@ export default function Sidebar() {
     return (
         <aside className="flex h-screen w-64 shrink-0 flex-col bg-brand-bg text-slate-300">
         <div className="flex items-center gap-2 px-6 py-6">
-        <span className="text-2xl">🏐</span>
         <span className="text-lg font-semibold tracking-tight text-white">
         Volleyball Tracker
         </span>

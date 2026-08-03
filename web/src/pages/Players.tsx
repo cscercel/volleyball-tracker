@@ -111,7 +111,7 @@ export default function Players() {
     setAddError('')
     try {
       await createPlayer(newPlayerName)
-      setAddSuccess(`✅ Added ${newPlayerName}`)
+      setAddSuccess(`Added ${newPlayerName}`)
       setNewPlayerName('')
       await fetchPlayers()
     } catch {
@@ -130,7 +130,7 @@ export default function Players() {
     setManageError('')
     try {
       await updatePlayerName(managePlayerId, newName)
-      setManageSuccess('✅ Renamed successfully')
+      setManageSuccess('Renamed successfully')
       await fetchPlayers()
     } catch {
       setManageError('Failed to rename player.')
@@ -142,7 +142,7 @@ export default function Players() {
     setManageError('')
     try {
       await deletePlayer(managePlayerId)
-      setManageSuccess('✅ Player deleted')
+      setManageSuccess('Player deleted')
       setManagePlayerId('')
       await fetchPlayers()
     } catch {
@@ -153,7 +153,7 @@ export default function Players() {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold tracking-tight text-slate-900">
-        👥 Players
+        Players
       </h1>
 
       <div className="mb-6 flex gap-1 border-b border-slate-200">
@@ -295,7 +295,7 @@ export default function Players() {
                               key={match.id}
                               className={`flex items-center gap-8 rounded-lg px-4 py-2 text-sm ${rowClass}`}
                             >
-                              <span>{won ? '✅ Win' : isOtl ? '⚠️ OTL' : '❌ Loss'}</span>
+                              <span>{won ? 'Win' : isOtl ? 'OTL' : 'Loss'}</span>
                               <span>
                                 {myScore} : {theirScore}
                               </span>

@@ -29,11 +29,11 @@ export default function Login() {
   return (
     <div className="flex justify-center">
       <div className="w-full max-w-sm rounded-2xl bg-brand-bg p-8 text-white shadow-sm">
-        <h1 className="mb-6 text-xl font-semibold">🔐 Admin</h1>
+        <h1 className="mb-6 text-xl font-semibold">Admin</h1>
 
         {auth.isAuthenticated ? (
           <>
-            <p className="mb-4 text-sm text-emerald-400">✅ Logged in</p>
+            <p className="mb-4 text-sm text-emerald-400">Logged in</p>
             <button
               onClick={() => auth.logout()}
               className="w-full rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium transition-colors hover:bg-brand-bg-hover"
