@@ -1,31 +1,15 @@
-# python
-.venv/
-__pycache__/
-.python-version
+# secrets
+.env
 
 # database
 *.db
 *.db-journal
 postgres_data/
 
-# testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-
-# jupyter notebook
-.ipynb_checkpoints
-
-# secrets
-.env
-.streamlit/
-
 # builds
 bin/
 
-# Logs
+# logs
 logs
 *.log
 npm-debug.log*
@@ -38,8 +22,10 @@ node_modules
 dist
 dist-ssr
 *.local
+.npmrc
+.wrangler
 
-# Editor directories and files
+# editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
