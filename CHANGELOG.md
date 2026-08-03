@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.0] - 2026.08.03
+
+### Added
+
+### Changed
+- Frontend overhaul from Svelte -> React + Tailwind CSS (for a more modern look)
+
+### Fixed
+
 ## [2.0.1] - 2026.06.13
 
 ### Added
