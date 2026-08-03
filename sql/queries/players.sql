@@ -91,6 +91,7 @@ FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
 WHERE ps.match_type = $1
 AND ps.season = $2
+AND ps.played > 0
 ORDER BY points DESC;
 
 -- name: UpdatePlayerStatsWin :one
