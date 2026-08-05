@@ -146,5 +146,5 @@ func (s *PlayerService) GetPlayerSeasonalMatches(
 		player_matches = player_matches[:pageLimit]
 	}
 
-	return player_matches, false, nil
+	return player_matches, hasMore, nil
 }
