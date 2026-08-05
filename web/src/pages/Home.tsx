@@ -4,7 +4,7 @@ import { getRank } from '../lib/rank'
 
 const currentYear = new Date().getFullYear()
 
-type SortKey = keyof PlayerStats | 'rank'
+type SortKey = keyof PlayerStats
 type SortDir = 'asc' | 'desc'
 
 const columns: { key: SortKey; label: string }[] = [
@@ -15,7 +15,6 @@ const columns: { key: SortKey; label: string }[] = [
   { key: 'otl', label: 'OTL' },
   { key: 'points', label: 'Points' },
   { key: 'win_rate', label: 'Win Rate' },
-  { key: 'rank', label: 'Rank' },
 ]
 
 export default function Home() {
@@ -62,11 +61,6 @@ export default function Home() {
 
   const sorted = useMemo(() => {
     return [...leaderboard].sort((a, b) => {
-      if (sortColumn === 'rank') {
-        const aRank = getRank(a.played, a.points, a.efficiency_rate)
-        const bRank = getRank(b.played, b.points, b.efficiency_rate)
-        return sortDir === 'asc' ? aRank.localeCompare(bRank) : bRank.localeCompare(aRank)
-      }
       const aVal = a[sortColumn]
       const bVal = b[sortColumn]
       if (typeof aVal === 'string' && typeof bVal === 'string') {
@@ -80,7 +74,7 @@ export default function Home() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Leaderboard
         </h1>
@@ -105,7 +99,8 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="min-w-[720px]">
         {loading ? (
           <p className="p-6 text-sm text-slate-500">Loading...</p>
         ) : error ? (
@@ -145,16 +140,12 @@ export default function Home() {
                   <td className="px-4 py-3">{player.otl}</td>
                   <td className="px-4 py-3">{player.points}</td>
                   <td className="px-4 py-3">{(player.win_rate * 100).toFixed(1)}%</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-full bg-brand-accent/10 px-2.5 py-0.5 text-xs font-medium text-brand-accent">
-                      {getRank(player.played, player.points, player.efficiency_rate)}
-                    </span>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+        </div>
       </div>
     </div>
   )

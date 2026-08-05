@@ -287,7 +287,7 @@ export default function Matches() {
                 </div>
               </div>
 
-              <div className="mb-4 grid grid-cols-2 gap-4">
+              <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-blue-900 bg-blue-950 p-4">
                   <h3 className="mb-3 font-semibold text-white">Blue Team</h3>
                   <div className="mb-3 flex min-h-[60px] flex-wrap gap-2">
@@ -379,7 +379,7 @@ export default function Matches() {
 
               {createdMatchRoster.length > 0 && (
                 <>
-                  <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="rounded-xl bg-blue-950 p-4">
                       <h3 className="mb-2 font-semibold text-white">Blue Team</h3>
                       {createdBluePlayers.map((p) => (
@@ -431,7 +431,7 @@ export default function Matches() {
                       <span>{match.match_type.toUpperCase()}</span>
                     </div>
 
-                    <div className="mb-3 grid grid-cols-2 gap-4">
+                    <div className="mb-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="rounded-xl bg-blue-950 p-4">
                         <h3 className="mb-2 font-semibold text-white">Blue Team</h3>
                         {blue.map((p) => (
@@ -548,7 +548,7 @@ export default function Matches() {
                       <span>{match.created_at.slice(0, 10)}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="rounded-xl bg-blue-950 p-4">
                         <h3 className="mb-2 font-semibold text-white">
                           Blue — {match.blue_score}

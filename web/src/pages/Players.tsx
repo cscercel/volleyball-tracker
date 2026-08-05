@@ -11,7 +11,6 @@ import {
   type PlayerStats,
   type MatchHistory,
 } from '../lib/api'
-import { getRank } from '../lib/rank'
 import { useAuth } from '../lib/AuthContext'
 
 const currentYear = new Date().getFullYear()
@@ -187,7 +186,7 @@ export default function Players() {
             <p className="text-sm text-slate-500">No players yet!</p>
           ) : (
             <>
-              <div className="mb-6 flex gap-3">
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row">
                 <select
                   value={selectedPlayerId}
                   onChange={(e) => setSelectedPlayerId(e.target.value)}
@@ -226,7 +225,7 @@ export default function Players() {
                 <p className="text-sm text-red-600">{statsError}</p>
               ) : stats ? (
                 <>
-                  <div className="mb-8 grid grid-cols-4 gap-4">
+                  <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
                     {[
                       { label: 'Matches Played', value: stats.played, prev: prevStats?.played ?? null },
                       { label: 'Wins', value: stats.wins, prev: prevStats?.wins ?? null },
@@ -267,13 +266,6 @@ export default function Players() {
                     })}
                   </div>
 
-                  <div className="mb-8 flex flex-col items-center gap-1">
-                    <h3 className="text-sm font-medium text-slate-500">Rank</h3>
-                    <span className="inline-flex items-center rounded-full bg-brand-accent/10 px-3 py-1 text-lg font-semibold text-brand-accent">
-                      {getRank(stats.played, stats.points, stats.efficiency_rate)}
-                    </span>
-                  </div>
-
                   <div>
                     <h3 className="mb-3 text-sm font-medium text-slate-500">Match History</h3>
                     {history.length === 0 ? (
@@ -293,7 +285,7 @@ export default function Players() {
                           return (
                             <div
                               key={match.id}
-                              className={`flex items-center gap-8 rounded-lg px-4 py-2 text-sm ${rowClass}`}
+                              className={`flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg px-4 py-2 text-sm ${rowClass}`}
                             >
                               <span>{won ? 'Win' : isOtl ? 'OTL' : 'Loss'}</span>
                               <span>
@@ -401,7 +393,7 @@ export default function Players() {
                   </div>
 
                   <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                    <h3 className="mb-1 text-sm font-medium text-red-700">🗑️ Delete</h3>
+                    <h3 className="mb-1 text-sm font-medium text-red-700">Delete</h3>
                     <p className="mb-3 text-sm text-red-600">
                       This will permanently delete this player.
                     </p>
