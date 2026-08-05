@@ -121,17 +121,37 @@ func (s *MatchService) GetMatch(ctx context.Context, matchID uuid.UUID) (db.Matc
 }
 
 func (s *MatchService) ListMatchesBySeason(
-	ctx context.Context, match_type string, season int32,
-) ([]db.Match, error) {
+	ctx context.Context, match_type string, season, page, pageLimit int32,
+) ([]db.Match, bool, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageLimit < 1 {
+		pageLimit = 5
+	}
+	if pageLimit > 50 {
+		pageLimit = 50 // Cap
+	}
+
+	limit := int32(pageLimit + 1) // fetch one extra to detect next page
+	offset := (page - 1) * pageLimit
+
 	matches, err := s.queries.ListMatchesBySeason(ctx, db.ListMatchesBySeasonParams{
 		MatchType: match_type,
 		Season:    season,
+		Limit:     limit,
+		Offset:    offset,
 	})
 	if err != nil {
-		return []db.Match{}, fmt.Errorf("failed to list seasonal matches: %w", err)
+		return []db.Match{}, false, fmt.Errorf("failed to list seasonal matches: %w", err)
 	}
 
-	return matches, nil
+	hasMore := int32(len(matches)) > pageLimit
+	if hasMore {
+		matches = matches[:pageLimit]
+	}
+
+	return matches, hasMore, nil
 }
 
 func (s *MatchService) ListUncompletedMatches(ctx context.Context) ([]db.Match, error) {

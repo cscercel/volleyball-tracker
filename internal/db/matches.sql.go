@@ -150,12 +150,16 @@ AND m.match_type = $2
 AND m.season = $3
 AND m.is_completed = TRUE
 ORDER BY m.created_at DESC
+LIMIT $4
+OFFSET $5
 `
 
 type GetPlayerSeasonalMatchesParams struct {
 	PlayerID  uuid.UUID `json:"player_id"`
 	MatchType string    `json:"match_type"`
 	Season    int32     `json:"season"`
+	Limit     int32     `json:"limit"`
+	Offset    int32     `json:"offset"`
 }
 
 type GetPlayerSeasonalMatchesRow struct {
@@ -169,7 +173,13 @@ type GetPlayerSeasonalMatchesRow struct {
 }
 
 func (q *Queries) GetPlayerSeasonalMatches(ctx context.Context, arg GetPlayerSeasonalMatchesParams) ([]GetPlayerSeasonalMatchesRow, error) {
-	rows, err := q.db.Query(ctx, getPlayerSeasonalMatches, arg.PlayerID, arg.MatchType, arg.Season)
+	rows, err := q.db.Query(ctx, getPlayerSeasonalMatches,
+		arg.PlayerID,
+		arg.MatchType,
+		arg.Season,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -202,15 +212,24 @@ WHERE match_type = $1
 AND season = $2
 AND is_completed = TRUE
 ORDER BY created_at DESC
+LIMIT $3
+OFFSET $4
 `
 
 type ListMatchesBySeasonParams struct {
 	MatchType string `json:"match_type"`
 	Season    int32  `json:"season"`
+	Limit     int32  `json:"limit"`
+	Offset    int32  `json:"offset"`
 }
 
 func (q *Queries) ListMatchesBySeason(ctx context.Context, arg ListMatchesBySeasonParams) ([]Match, error) {
-	rows, err := q.db.Query(ctx, listMatchesBySeason, arg.MatchType, arg.Season)
+	rows, err := q.db.Query(ctx, listMatchesBySeason,
+		arg.MatchType,
+		arg.Season,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

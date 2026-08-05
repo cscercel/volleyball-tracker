@@ -22,7 +22,9 @@ SELECT * FROM matches
 WHERE match_type = $1
 AND season = $2
 AND is_completed = TRUE
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
+LIMIT $3
+OFFSET $4;
 
 -- name: ListUncompletedMatches :many
 SELECT * FROM matches
@@ -63,4 +65,6 @@ WHERE mp.player_id = $1
 AND m.match_type = $2
 AND m.season = $3
 AND m.is_completed = TRUE
-ORDER BY m.created_at DESC;
+ORDER BY m.created_at DESC
+LIMIT $4
+OFFSET $5;

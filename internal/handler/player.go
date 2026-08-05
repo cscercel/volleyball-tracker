@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	_ "github.com/cscercel/volleyball-tracker/internal/db" // ONLY required for Swagger to pick up db interfaces
+	"github.com/cscercel/volleyball-tracker/internal/db"
 	"github.com/cscercel/volleyball-tracker/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -227,7 +227,9 @@ func (h *PlayerHandler) handleGetLeaderboard(w http.ResponseWriter, r *http.Requ
 // @Param        id   		path  		string  true  "Player ID"
 // @Param        match_type query  		string  true  "Match Type"
 // @Param        season   	query      	integer true  "Season"
-// @Success      200  		{array}   	[]db.GetPlayerSeasonalMatchesRow
+// @Param        page   	query      	integer false  "Page number"
+// @Param        page_limit query      	integer false  "Page limit"
+// @Success      200  		{array}   	object{matches=[]db.GetPlayerSeasonalMatchesRow, has_more=bool}
 // @Failure      400  		{object}  	object{error=string}
 // @Failure      404  		{object}  	object{error=string}
 // @Router       /api/v1/players/{id}/history [get]
@@ -254,11 +256,37 @@ func (h *PlayerHandler) handleGetPlayerSeasonalMatches(w http.ResponseWriter, r 
 		return
 	}
 
-	player_matches, err := h.service.GetPlayerSeasonalMatches(r.Context(), playerID, matchType, int32(season))
+	page := 1
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		page, err = strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			respondWithError(w, http.StatusBadRequest, "invalid page", err)
+			return
+		}
+	}
+
+	pageLimit := 5
+	if pageLimitStr := r.URL.Query().Get("page_limit"); pageLimitStr != "" {
+		pageLimit, err = strconv.Atoi(pageLimitStr)
+		if err != nil || pageLimit < 1 {
+			respondWithError(w, http.StatusBadRequest, "invalid page limit", err)
+			return
+		}
+	}
+
+	player_matches, hasMore, err := h.service.GetPlayerSeasonalMatches(
+		r.Context(), playerID, matchType, int32(season), int32(page), int32(pageLimit),
+	)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "could not load player history", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, player_matches)
+	respondWithJSON(w, http.StatusOK, struct{
+		Matches []db.GetPlayerSeasonalMatchesRow	`json:"matches"`
+		HasMore bool								`json:"has_more"`
+	}{
+		Matches: player_matches,
+		HasMore: hasMore,
+	})
 }

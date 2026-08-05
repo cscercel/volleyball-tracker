@@ -11,6 +11,7 @@ import {
   type PlayerStats,
   type MatchHistory,
 } from '../lib/api'
+import Pagination from '../components/Pagination'
 import { useAuth } from '../lib/AuthContext'
 
 const currentYear = new Date().getFullYear()
@@ -62,6 +63,9 @@ export default function Players() {
   const [stats, setStats] = useState<PlayerStats | null>(null)
   const [prevStats, setPrevStats] = useState<PlayerStats | null>(null)
   const [history, setHistory] = useState<MatchHistory[]>([])
+  const [historyPage, setHistoryPage] = useState(1)
+  const [historyHasMore, setHistoryHasMore] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const [loadingStats, setLoadingStats] = useState(false)
   const [statsError, setStatsError] = useState('')
 
@@ -74,10 +78,8 @@ export default function Players() {
       setStatsError('')
       try {
         const s = await getPlayerStats(selectedPlayerId, matchType, season)
-        const h = await getPlayerHistory(selectedPlayerId, matchType, season)
         if (cancelled) return
         setStats(s)
-        setHistory(h)
         try {
           const p = await getPlayerStats(selectedPlayerId, matchType, season - 1)
           if (!cancelled) setPrevStats(p)
@@ -99,6 +101,41 @@ export default function Players() {
       cancelled = true
     }
   }, [selectedPlayerId, matchType, season])
+
+  // Reset to page 1 whenever the player/filters change
+  useEffect(() => {
+    setHistoryPage(1)
+  }, [selectedPlayerId, matchType, season])
+
+  useEffect(() => {
+    if (!selectedPlayerId) return
+    let cancelled = false
+
+    async function fetchHistory() {
+      setLoadingHistory(true)
+      try {
+        const { items, hasMore } = await getPlayerHistory(
+          selectedPlayerId,
+          matchType,
+          season,
+          historyPage,
+          5
+        )
+        if (cancelled) return
+        setHistory(items)
+        setHistoryHasMore(hasMore)
+      } catch {
+        if (!cancelled) setHistory([])
+      } finally {
+        if (!cancelled) setLoadingHistory(false)
+      }
+    }
+
+    fetchHistory()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedPlayerId, matchType, season, historyPage])
 
   // --- Add player tab state ---
   const [newPlayerName, setNewPlayerName] = useState('')
@@ -298,6 +335,14 @@ export default function Players() {
                         })}
                       </div>
                     )}
+                    {(history.length > 0 || historyPage > 1) && (
+                      <Pagination
+                        page={historyPage}
+                        hasMore={historyHasMore}
+                        onPageChange={setHistoryPage}
+                        loading={loadingHistory}
+                      />
+                    )}
                   </div>
                 </>
               ) : null}
@@ -373,7 +418,7 @@ export default function Players() {
               {managePlayerId && (
                 <div className="mt-6 space-y-6">
                   <div>
-                    <h3 className="mb-2 text-sm font-medium text-slate-700">✏️ Rename</h3>
+                    <h3 className="mb-2 text-sm font-medium text-slate-700">Rename</h3>
                     <div className="flex gap-3">
                       <input
                         type="text"

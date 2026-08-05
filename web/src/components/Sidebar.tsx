@@ -11,15 +11,44 @@ export default function Sidebar() {
   const auth = useAuth()
 
   return (
-    <aside className="hidden h-screen w-64 shrink-0 flex-col bg-brand-bg text-slate-300 md:flex">
+    <aside className="hidden min-h-screen w-64 shrink-0 flex-col bg-brand-bg text-slate-300 md:flex">
       <div className="flex items-center gap-2 px-6 py-6">
-        <span className="text-2xl">🏐</span>
         <span className="text-lg font-semibold tracking-tight text-white">
           Volleyball Tracker
         </span>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3">
+        <div className="px-3 pb-4 border-b border-slate-700/60">
+          {auth.isAuthenticated ? (
+            <div className="flex items-center justify-between gap-2 px-1">
+              <p className="flex items-center gap-2 text-xs font-medium text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Admin
+              </p>
+              <button
+                onClick={() => auth.logout()}
+                className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:bg-brand-bg-hover hover:text-white"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2 px-1">
+              <p className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                Guest
+              </p>
+              <NavLink
+                to="/login"
+                className="rounded-lg border border-brand-accent px-3 py-1.5 text-xs font-medium text-brand-accent transition-colors hover:bg-brand-accent hover:text-white"
+              >
+                Login
+              </NavLink>
+            </div>
+          )}
+        </div>
+
+      <nav className="flex-1 space-y-1 px-3 pt-6">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -39,30 +68,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="border-t border-slate-700/60 px-3 py-4">
-        {auth.isAuthenticated ? (
-          <div className="space-y-2 px-3">
-            <p className="flex items-center gap-2 text-xs font-medium text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Admin
-            </p>
-            <button
-              onClick={() => auth.logout()}
-              className="w-full rounded-lg border border-slate-600 px-3 py-2 text-left text-sm text-slate-300 transition-colors hover:bg-brand-bg-hover hover:text-white"
-            >
-              Logout
-            </button>
-          </div>
-        ) : (
-          <NavLink
-            to="/login"
-            className="block rounded-lg border border-brand-accent px-3 py-2 text-center text-sm font-medium text-brand-accent transition-colors hover:bg-brand-accent hover:text-white"
-          >
-            Login
-          </NavLink>
-        )}
-      </div>
     </aside>
   )
 }

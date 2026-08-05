@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getLeaderboard, type PlayerStats } from '../lib/api'
-import { getRank } from '../lib/rank'
 
 const currentYear = new Date().getFullYear()
 

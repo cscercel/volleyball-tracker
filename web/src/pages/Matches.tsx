@@ -13,6 +13,7 @@ import {
   type MatchPlayer,
 } from '../lib/api'
 import Court from '../components/Court'
+import Pagination from '../components/Pagination'
 import { useAuth } from '../lib/AuthContext'
 
 const currentYear = new Date().getFullYear()
@@ -176,14 +177,17 @@ export default function Matches() {
   const [completed, setCompleted] = useState<Match[]>([])
   const [completedRosters, setCompletedRosters] = useState<Record<string, MatchPlayer[]>>({})
   const [loadingCompleted, setLoadingCompleted] = useState(false)
+  const [completedPage, setCompletedPage] = useState(1)
+  const [completedHasMore, setCompletedHasMore] = useState(false)
 
-  async function fetchCompleted() {
+  async function fetchCompleted(page: number) {
     setLoadingCompleted(true)
     try {
-      const fetchedCompleted = await getMatchesBySeason(completedType, completedSeason)
-      setCompleted(fetchedCompleted)
+      const { items, hasMore } = await getMatchesBySeason(completedType, completedSeason, page, 5)
+      setCompleted(items)
+      setCompletedHasMore(hasMore)
       const rosters: Record<string, MatchPlayer[]> = {}
-      for (const match of fetchedCompleted) {
+      for (const match of items) {
         rosters[match.id] = await getMatchRoster(match.id)
       }
       setCompletedRosters(rosters)
@@ -196,14 +200,21 @@ export default function Matches() {
 
   useEffect(() => {
     if (activeTab === 'drafts') fetchDrafts()
-    if (activeTab === 'completed') fetchCompleted()
+    if (activeTab === 'completed') fetchCompleted(completedPage)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
+  // Reset to page 1 whenever the filters change, then fetch
   useEffect(() => {
-    if (activeTab === 'completed') fetchCompleted()
+    setCompletedPage(1)
+    if (activeTab === 'completed') fetchCompleted(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completedType, completedSeason])
+
+  useEffect(() => {
+    if (activeTab === 'completed') fetchCompleted(completedPage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completedPage])
 
   return (
     <div>
@@ -574,6 +585,14 @@ export default function Matches() {
                 )
               })}
             </div>
+          )}
+          {(completed.length > 0 || completedPage > 1) && (
+            <Pagination
+              page={completedPage}
+              hasMore={completedHasMore}
+              onPageChange={setCompletedPage}
+              loading={loadingCompleted}
+            />
           )}
         </div>
       )}

@@ -53,6 +53,11 @@ export type MatchHistory = {
     color: string
 }
 
+export type PaginatedResult<T> = {
+    items: T[]
+    hasMore: boolean
+}
+
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
@@ -104,13 +109,16 @@ export async function getLeaderboard(
 export async function getPlayerHistory(
     playerId: string,
     matchType: string,
-    season: number
-): Promise<MatchHistory[]> {
+    season: number,
+    page = 1,
+    pageLimit = 5
+): Promise<PaginatedResult<MatchHistory>> {
     const res = await fetch(
-        `${API_BASE}/players/${playerId}/history?match_type=${matchType}&season=${season}`
+        `${API_BASE}/players/${playerId}/history?match_type=${matchType}&season=${season}&page=${page}&page_limit=${pageLimit}`
     )
     if (!res.ok) throw new Error('Failed to fetch player history')
-    return res.json()
+    const data = await res.json()
+    return { items: data.matches, hasMore: data.has_more }
 }
 
 export async function createPlayer(name: string): Promise<Player> {
@@ -182,13 +190,16 @@ export async function getUncompletedMatches(): Promise<Match[]> {
 
 export async function getMatchesBySeason(
     matchType: string,
-    season: number
-): Promise<Match[]> {
+    season: number,
+    page = 1,
+    pageLimit = 5
+): Promise<PaginatedResult<Match>> {
     const res = await fetch(
-        `${API_BASE}/matches/?match_type=${matchType}&season=${season}`
+        `${API_BASE}/matches/?match_type=${matchType}&season=${season}&page=${page}&page_limit=${pageLimit}`
     )
     if (!res.ok) throw new Error('Failed to fetch matches')
-    return res.json()
+    const data = await res.json()
+    return { items: data.matches, hasMore: data.has_more }
 }
 
 export async function submitMatchResults(

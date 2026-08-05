@@ -115,16 +115,36 @@ func (s *PlayerService) GetLeaderboard(
 
 // From matches.sql -> felt it was better here
 func (s *PlayerService) GetPlayerSeasonalMatches(
-	ctx context.Context, playerID uuid.UUID, match_type string, season int32,
-) ([]db.GetPlayerSeasonalMatchesRow, error) {
+	ctx context.Context, playerID uuid.UUID, match_type string, season, page, pageLimit int32,
+) ([]db.GetPlayerSeasonalMatchesRow, bool, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageLimit < 1 {
+		pageLimit = 5
+	}
+	if pageLimit > 50 {
+		pageLimit = 50 // Cap
+	}
+
+	limit := int32(pageLimit + 1) // fetch one extra to detect next page
+	offset := (page - 1) * pageLimit
+
 	player_matches, err := s.queries.GetPlayerSeasonalMatches(ctx, db.GetPlayerSeasonalMatchesParams{
 		PlayerID:  playerID,
 		MatchType: match_type,
 		Season:    season,
+		Limit:     limit,
+		Offset:    offset,
 	})
 	if err != nil {
-		return []db.GetPlayerSeasonalMatchesRow{}, fmt.Errorf("failed to retrieve player matches: %w", err)
+		return []db.GetPlayerSeasonalMatchesRow{}, false, fmt.Errorf("failed to retrieve player matches: %w", err)
 	}
 
-	return player_matches, nil
+	hasMore := int32(len(player_matches)) > pageLimit
+	if hasMore {
+		player_matches = player_matches[:pageLimit]
+	}
+
+	return player_matches, false, nil
 }
