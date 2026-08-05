@@ -1,11 +1,13 @@
 # Changelog
 
-## [2.1.0] - 2026.08.03
+## [2.1.0] - 2026.08.04
 
 ### Added
+- Pagination added to SeasonalMatches and PlayerSeasonalMatches
 
 ### Changed
 - Frontend overhaul from Svelte -> React + Tailwind CSS (for a more modern look)
+- Removal of Ranks for now as I am reworking it completely
 
 ### Fixed
 

@@ -38,17 +38,34 @@ const docTemplate = `{
                         "name": "season",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page limit",
+                        "name": "page_limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
+                            "type": "object",
+                            "properties": {
+                                "has_more": {
+                                    "type": "boolean"
+                                },
+                                "matches": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match"
+                                    }
                                 }
                             }
                         }
@@ -827,6 +844,18 @@ const docTemplate = `{
                         "name": "season",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page limit",
+                        "name": "page_limit",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -835,9 +864,17 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow"
+                                "type": "object",
+                                "properties": {
+                                    " has_more": {
+                                        "type": "boolean"
+                                    },
+                                    "matches": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow"
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -212,17 +212,28 @@ paths:
         name: season
         required: true
         type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page limit
+        in: query
+        name: page_limit
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              items:
-                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
-              type: array
-            type: array
+            properties:
+              has_more:
+                type: boolean
+              matches:
+                items:
+                  $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.Match'
+                type: array
+            type: object
         "400":
           description: Bad Request
           schema:
@@ -676,6 +687,14 @@ paths:
         name: season
         required: true
         type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page limit
+        in: query
+        name: page_limit
+        type: integer
       produces:
       - application/json
       responses:
@@ -683,9 +702,14 @@ paths:
           description: OK
           schema:
             items:
-              items:
-                $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow'
-              type: array
+              properties:
+                ' has_more':
+                  type: boolean
+                matches:
+                  items:
+                    $ref: '#/definitions/github_com_cscercel_volleyball-tracker_internal_db.GetPlayerSeasonalMatchesRow'
+                  type: array
+              type: object
             type: array
         "400":
           description: Bad Request
