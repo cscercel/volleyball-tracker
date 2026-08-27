@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.1] - 2026.08.26
+
+### Added
+
+### Changed
+
+### Fixed
+- Fixed a bug where players with no stats for match_type and season could not be drafted into a match
+
 ## [2.1.0] - 2026.08.04
 
 ### Added

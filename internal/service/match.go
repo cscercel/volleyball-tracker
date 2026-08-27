@@ -44,8 +44,9 @@ func (s *MatchService) addPlayerToMatch(
 			if err != nil {
 				return fmt.Errorf("failed to initliaze stats for player: %w", err)
 			}
+		} else {
+			return fmt.Errorf("failed to load stats for player: %w", err)
 		}
-		return fmt.Errorf("failed to load stats for player: %w", err)
 	}
 
 	_, err = s.queries.AddPlayerToMatch(ctx, db.AddPlayerToMatchParams{
