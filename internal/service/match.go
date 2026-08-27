@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
 	"slices"
@@ -35,7 +36,7 @@ func (s *MatchService) addPlayerToMatch(
 		Season:    match.Season,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			_, err = s.queries.UpsertPlayerStats(ctx, db.UpsertPlayerStatsParams{
 				PlayerID:  player.ID,
 				MatchType: match.MatchType,
