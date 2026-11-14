@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.0] - 2026.11.14
+
+### Added
+
+### Changed
+- Migrated database to turso (refactor schemas into sqlite instead of postgresql)
+- Updated `favicon` to be an actual volleyball instead of default svg
+- Small UI palette changes
+
+### Fixed
+
+
 ## [2.1.1] - 2026.08.26
 
 ### Added
