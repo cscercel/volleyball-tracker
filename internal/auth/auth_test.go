@@ -8,7 +8,7 @@ import (
 )
 
 func TestValidateJWT(t *testing.T) {
-	userID := 1
+	var userID int64
 	validToken, _ := MakeJWT(userID, "secret", time.Hour)
 
 	tests := []struct {
