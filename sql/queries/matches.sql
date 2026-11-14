@@ -1,43 +1,43 @@
 -- name: CreateMatch :one
 INSERT INTO matches (match_type, season)
-VALUES ($1, $2)
+VALUES (?, ?)
 RETURNING *;
 
 -- name: GetMatch :one
 SELECT * FROM matches
-WHERE id = $1;
+WHERE id = ?;
 
 -- name: UpdateMatchScores :one
 UPDATE matches
 SET 
-    blue_score = $2,
-    red_score = $3,
-    is_completed = TRUE,
-    updated_at = NOW()
-WHERE id = $1
+    blue_score = ?,
+    red_score = ?,
+    is_completed = 1,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
 RETURNING *;
 
 -- name: ListMatchesBySeason :many
 SELECT * FROM matches
-WHERE match_type = $1
-AND season = $2
-AND is_completed = TRUE
+WHERE match_type = ?
+AND season = ?
+AND is_completed = 1
 ORDER BY created_at DESC
-LIMIT $3
-OFFSET $4;
+LIMIT ?
+OFFSET ?;
 
 -- name: ListUncompletedMatches :many
 SELECT * FROM matches
-WHERE is_completed = FALSE;
+WHERE is_completed = 0;
 
 -- name: DeleteUncompletedMatch :exec
 DELETE FROM matches
-WHERE is_completed = FALSE
-AND id = $1;
+WHERE is_completed = 0
+AND id = ?;
 
 -- name: AddPlayerToMatch :one
 INSERT INTO match_players (match_id, player_id, color)
-VALUES ($1, $2, $3)
+VALUES (?, ?, ?)
 RETURNING *;
 
 -- name: GetMatchPlayers :many
@@ -47,7 +47,7 @@ SELECT
     p.name AS player_name
 FROM match_players mp
 JOIN players p ON p.id = mp.player_id
-WHERE mp.match_id = $1
+WHERE mp.match_id = ?
 ORDER BY mp.color;
 
 -- name: GetPlayerSeasonalMatches :many
@@ -61,10 +61,10 @@ SELECT
     mp.color
 FROM match_players mp
 JOIN matches m ON m.id = mp.match_id
-WHERE mp.player_id = $1
-AND m.match_type = $2
-AND m.season = $3
-AND m.is_completed = TRUE
+WHERE mp.player_id = ?
+AND m.match_type = ?
+AND m.season = ?
+AND m.is_completed = 1
 ORDER BY m.created_at DESC
-LIMIT $4
-OFFSET $5;
+LIMIT ?
+OFFSET ?;

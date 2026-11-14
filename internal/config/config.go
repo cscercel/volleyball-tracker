@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	Env              string
 	DatabaseURL      string
 	Port             string
 	JWTSecret        string
@@ -27,8 +28,16 @@ func Load() (*Config, error) {
 		}
 	}
 
+	env := os.Getenv("ENV")
+	db_url := os.Getenv("DATABASE_URL")
+
+	if env == "DEV" {
+		db_url = "file:local.db"
+	}
+
 	cfg := &Config{
-		DatabaseURL:      os.Getenv("DATABASE_URL"),
+		Env:              env,
+		DatabaseURL:      db_url,
 		Port:             os.Getenv("PORT"),
 		JWTSecret:        os.Getenv("JWT_SECRET"),
 		JWTExpiryHours:   expiryHours,

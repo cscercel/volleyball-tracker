@@ -9,7 +9,6 @@ import (
 	"github.com/cscercel/volleyball-tracker/internal/db"
 	"github.com/cscercel/volleyball-tracker/internal/service"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 type PlayerHandler struct {
@@ -84,21 +83,22 @@ func (h *PlayerHandler) handleListPlayers(w http.ResponseWriter, r *http.Request
 }
 
 // @Summary      Update Player Name
-// @Description  Updates the name of an existing player by their UUID
 // @Tags         players
 // @Accept       json
 // @Security     BearerAuth
 // @Produce      json
-// @Param        id   path      string                true  "Player UUID" format(uuid)
+// @Param        id   path      int                true  "Player ID"
 // @Param        body body      object{name=string}   true  "New Player Name"
 // @Success      200  {object}  db.Player
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/players/{id} [put]
 func (h *PlayerHandler) handleUpdatePlayerName(w http.ResponseWriter, r *http.Request) {
-	playerID, err := uuid.Parse(chi.URLParam(r, "id"))
+	playerIDstr := chi.URLParam(r, "id")
+
+	playerID, err := strconv.ParseInt(playerIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid player id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
@@ -124,15 +124,17 @@ func (h *PlayerHandler) handleUpdatePlayerName(w http.ResponseWriter, r *http.Re
 // @Tags         players
 // @Security     BearerAuth
 // @Produce      json
-// @Param        id   path      string                true  "Player UUID" format(uuid)
+// @Param        id   path      int                true  "Player ID"
 // @Success      204
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/players/{id} [delete]
 func (h *PlayerHandler) handleDeletePlayer(w http.ResponseWriter, r *http.Request) {
-	playerID, err := uuid.Parse(chi.URLParam(r, "id"))
+	playerIDstr := chi.URLParam(r, "id")
+
+	playerID, err := strconv.ParseInt(playerIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid player id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
@@ -147,7 +149,7 @@ func (h *PlayerHandler) handleDeletePlayer(w http.ResponseWriter, r *http.Reques
 // @Summary      Get Player By ID
 // @Tags         players
 // @Produce      json
-// @Param        id   		path  		string  true  "Player ID"
+// @Param        id   		path  		int  true  "Player ID"
 // @Param        match_type query  		string  true  "Match Type"
 // @Param        season   	query      	integer true  "Season"
 // @Success      200  		{array}   	db.GetPlayerStatsByIDRow
@@ -155,9 +157,11 @@ func (h *PlayerHandler) handleDeletePlayer(w http.ResponseWriter, r *http.Reques
 // @Failure      404  		{object}  	object{error=string}
 // @Router       /api/v1/players/{id} [get]
 func (h *PlayerHandler) handleGetPlayerByID(w http.ResponseWriter, r *http.Request) {
-	playerID, err := uuid.Parse(chi.URLParam(r, "id"))
+	playerIDstr := chi.URLParam(r, "id")
+
+	playerID, err := strconv.ParseInt(playerIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid player id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
@@ -171,13 +175,13 @@ func (h *PlayerHandler) handleGetPlayerByID(w http.ResponseWriter, r *http.Reque
 	}
 
 	seasonStr := r.URL.Query().Get("season")
-	season, err := strconv.Atoi(seasonStr)
+	season, err := strconv.ParseInt(seasonStr, 10, 64)
 	if err != nil || season < 2023 {
 		respondWithError(w, http.StatusBadRequest, "no season before 2023", err)
 		return
 	}
 
-	player, err := h.service.GetPlayerByID(r.Context(), playerID, matchType, int32(season))
+	player, err := h.service.GetPlayerByID(r.Context(), playerID, matchType, season)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "could not get player", err)
 		return
@@ -206,13 +210,13 @@ func (h *PlayerHandler) handleGetLeaderboard(w http.ResponseWriter, r *http.Requ
 	}
 
 	seasonStr := r.URL.Query().Get("season")
-	season, err := strconv.Atoi(seasonStr)
+	season, err := strconv.ParseInt(seasonStr, 10, 64)
 	if err != nil || season < 2023 {
 		respondWithError(w, http.StatusBadRequest, "no season before 2023", err)
 		return
 	}
 
-	leaderboard, err := h.service.GetLeaderboard(r.Context(), matchType, int32(season))
+	leaderboard, err := h.service.GetLeaderboard(r.Context(), matchType, season)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "failed to load leaderboard", err)
 		return
@@ -224,7 +228,7 @@ func (h *PlayerHandler) handleGetLeaderboard(w http.ResponseWriter, r *http.Requ
 // @Summary      Get Player Match History
 // @Tags         players
 // @Produce      json
-// @Param        id   		path  		string  true  "Player ID"
+// @Param        id   		path  		int  true  "Player ID"
 // @Param        match_type query  		string  true  "Match Type"
 // @Param        season   	query      	integer true  "Season"
 // @Param        page   	query      	integer false  "Page number"
@@ -234,9 +238,11 @@ func (h *PlayerHandler) handleGetLeaderboard(w http.ResponseWriter, r *http.Requ
 // @Failure      404  		{object}  	object{error=string}
 // @Router       /api/v1/players/{id}/history [get]
 func (h *PlayerHandler) handleGetPlayerSeasonalMatches(w http.ResponseWriter, r *http.Request) {
-	playerID, err := uuid.Parse(chi.URLParam(r, "id"))
+	playerIDstr := chi.URLParam(r, "id")
+
+	playerID, err := strconv.ParseInt(playerIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid player id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
@@ -250,24 +256,24 @@ func (h *PlayerHandler) handleGetPlayerSeasonalMatches(w http.ResponseWriter, r 
 	}
 
 	seasonStr := r.URL.Query().Get("season")
-	season, err := strconv.Atoi(seasonStr)
+	season, err := strconv.ParseInt(seasonStr, 10, 64)
 	if err != nil || season < 2023 {
 		respondWithError(w, http.StatusBadRequest, "no season before 2023", err)
 		return
 	}
 
-	page := 1
+	page := int64(1)
 	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
-		page, err = strconv.Atoi(pageStr)
+		page, err = strconv.ParseInt(pageStr, 10, 64)
 		if err != nil || page < 1 {
 			respondWithError(w, http.StatusBadRequest, "invalid page", err)
 			return
 		}
 	}
 
-	pageLimit := 5
+	pageLimit := int64(5)
 	if pageLimitStr := r.URL.Query().Get("page_limit"); pageLimitStr != "" {
-		pageLimit, err = strconv.Atoi(pageLimitStr)
+		pageLimit, err = strconv.ParseInt(pageLimitStr, 10, 64)
 		if err != nil || pageLimit < 1 {
 			respondWithError(w, http.StatusBadRequest, "invalid page limit", err)
 			return
@@ -275,16 +281,16 @@ func (h *PlayerHandler) handleGetPlayerSeasonalMatches(w http.ResponseWriter, r 
 	}
 
 	player_matches, hasMore, err := h.service.GetPlayerSeasonalMatches(
-		r.Context(), playerID, matchType, int32(season), int32(page), int32(pageLimit),
+		r.Context(), playerID, matchType, season, page, pageLimit,
 	)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "could not load player history", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, struct{
-		Matches []db.GetPlayerSeasonalMatchesRow	`json:"matches"`
-		HasMore bool								`json:"has_more"`
+	respondWithJSON(w, http.StatusOK, struct {
+		Matches []db.GetPlayerSeasonalMatchesRow `json:"matches"`
+		HasMore bool                             `json:"has_more"`
 	}{
 		Matches: player_matches,
 		HasMore: hasMore,

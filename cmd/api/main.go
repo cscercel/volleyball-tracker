@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"time"
@@ -9,16 +9,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	_ "github.com/lib/pq"
 
 	"github.com/cscercel/volleyball-tracker/internal/config"
 	"github.com/cscercel/volleyball-tracker/internal/db"
 	"github.com/cscercel/volleyball-tracker/internal/handler"
-	"github.com/cscercel/volleyball-tracker/internal/repository"
 	"github.com/cscercel/volleyball-tracker/internal/service"
 
 	_ "github.com/cscercel/volleyball-tracker/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
+	_ "modernc.org/sqlite"
 )
 
 // @title           Volleyball Tracker API
@@ -40,17 +40,20 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	ctx := context.Background()
-
 	// Connect to Database
-	pool, err := repository.NewPool(ctx, cfg.DatabaseURL)
+	conn, err := sql.Open("libsql", cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		log.Fatalf("failed to open to database: %v", err)
 	}
-	defer pool.Close()
+	defer conn.Close()
+
+	// Verify connection
+	if err := conn.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
 
 	// Instantiate API
-	queries := db.New(pool)
+	queries := db.New(conn)
 
 	// Player handlers
 	playerService := service.NewPlayerService(queries)
@@ -88,11 +91,6 @@ func main() {
 		playerHandler.RegisterRoutes(r, authMiddleware)
 		matchHandler.RegisterRoutes(r, authMiddleware)
 		userHandler.RegisterRoutes(r, authMiddleware)
-	})
-
-	// Small `Mandatory` test route
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("healthy"))
 	})
 
 	// Docs

@@ -9,7 +9,6 @@ import (
 	"github.com/cscercel/volleyball-tracker/internal/db"
 	"github.com/cscercel/volleyball-tracker/internal/service"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 type MatchHandler struct {
@@ -71,15 +70,17 @@ func (h *MatchHandler) handleCreateMatch(w http.ResponseWriter, r *http.Request)
 // @Summary      Get Match
 // @Tags         matches
 // @Produce      json
-// @Param        id   path      string                true  "Match UUID" format(uuid)
+// @Param        id   path      int                true  "Match ID"
 // @Success      200  {array}   db.Match
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/matches/{id} [get]
 func (h *MatchHandler) handleGetMatch(w http.ResponseWriter, r *http.Request) {
-	matchID, err := uuid.Parse(chi.URLParam(r, "id"))
+	matchIDstr := chi.URLParam(r, "id")
+
+	matchID, err := strconv.ParseInt(matchIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid match id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
@@ -114,24 +115,24 @@ func (h *MatchHandler) handleListMatchesBySeason(w http.ResponseWriter, r *http.
 	}
 
 	seasonStr := r.URL.Query().Get("season")
-	season, err := strconv.Atoi(seasonStr)
+	season, err := strconv.ParseInt(seasonStr, 10, 64)
 	if err != nil || season < 2023 {
 		respondWithError(w, http.StatusBadRequest, "no season before 2023", err)
 		return
 	}
 
-	page := 1
+	page := int64(1)
 	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
-		page, err = strconv.Atoi(pageStr)
+		page, err = strconv.ParseInt(pageStr, 10, 64)
 		if err != nil || page < 1 {
 			respondWithError(w, http.StatusBadRequest, "invalid page", err)
 			return
 		}
 	}
 
-	pageLimit := 5
+	pageLimit := int64(5)
 	if pageLimitStr := r.URL.Query().Get("page_limit"); pageLimitStr != "" {
-		pageLimit, err = strconv.Atoi(pageLimitStr)
+		pageLimit, err = strconv.ParseInt(pageLimitStr, 10, 64)
 		if err != nil || pageLimit < 1 {
 			respondWithError(w, http.StatusBadRequest, "invalid page limit", err)
 			return
@@ -139,16 +140,16 @@ func (h *MatchHandler) handleListMatchesBySeason(w http.ResponseWriter, r *http.
 	}
 
 	matches, hasMore, err := h.service.ListMatchesBySeason(
-		r.Context(), matchType, int32(season), int32(page), int32(pageLimit),
+		r.Context(), matchType, season, page, pageLimit,
 	)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "could not get matches", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, struct{
-		Matches []db.Match 	`json:"matches"`
-		HasMore bool		`json:"has_more"`
+	respondWithJSON(w, http.StatusOK, struct {
+		Matches []db.Match `json:"matches"`
+		HasMore bool       `json:"has_more"`
 	}{
 		Matches: matches,
 		HasMore: hasMore,
@@ -176,15 +177,17 @@ func (h *MatchHandler) handleListUncompletedMatches(w http.ResponseWriter, r *ht
 // @Tags         matches
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id   path      string                true  "Match UUID" format(uuid)
+// @Param        id   path      int                true  "Match ID"
 // @Success      204
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/matches/{id} [delete]
 func (h *MatchHandler) handleDeleteUncompletedMatch(w http.ResponseWriter, r *http.Request) {
-	matchID, err := uuid.Parse(chi.URLParam(r, "id"))
+	matchIDstr := chi.URLParam(r, "id")
+
+	matchID, err := strconv.ParseInt(matchIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid match id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
@@ -199,15 +202,17 @@ func (h *MatchHandler) handleDeleteUncompletedMatch(w http.ResponseWriter, r *ht
 // @Summary      Get Match Players
 // @Tags         matches
 // @Produce      json
-// @Param        id   path      string                true  "Match UUID" format(uuid)
+// @Param        id   path      int                true  "Match ID"
 // @Success      200  {array}   []db.GetMatchPlayersRow
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/matches/{id}/roster [get]
 func (h *MatchHandler) handleGetMatchPlayers(w http.ResponseWriter, r *http.Request) {
-	matchID, err := uuid.Parse(chi.URLParam(r, "id"))
+	matchIDstr := chi.URLParam(r, "id")
+
+	matchID, err := strconv.ParseInt(matchIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid match id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
@@ -226,22 +231,24 @@ func (h *MatchHandler) handleGetMatchPlayers(w http.ResponseWriter, r *http.Requ
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string                true  "Match UUID" format(uuid)
+// @Param        id   path      int               true  "Match ID"
 // @Param        body body      object{blue_score=int, red_score=int}   true  "Match Scores"
 // @Success      200  {object}  db.Match
 // @Failure      400  {object}  object{error=string}
 // @Failure      500  {object}  object{error=string}
 // @Router       /api/v1/matches/{id} [put]
 func (h *MatchHandler) handleRegisterMatch(w http.ResponseWriter, r *http.Request) {
-	matchID, err := uuid.Parse(chi.URLParam(r, "id"))
+	matchIDstr := chi.URLParam(r, "id")
+
+	matchID, err := strconv.ParseInt(matchIDstr, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "invalid match id", err)
+		respondWithError(w, http.StatusBadRequest, "id must be an integer", err)
 		return
 	}
 
 	var body struct {
-		BlueScore int32 `json:"blue_score"`
-		RedScore  int32 `json:"red_score"`
+		BlueScore int64 `json:"blue_score"`
+		RedScore  int64 `json:"red_score"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {

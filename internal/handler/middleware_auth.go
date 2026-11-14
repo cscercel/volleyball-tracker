@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/cscercel/volleyball-tracker/internal/auth"
-	"github.com/google/uuid"
 )
 
 type contextKey string
@@ -32,10 +31,10 @@ func AuthenticateMiddleware(tokenSecret string) func(http.Handler) http.Handler 
 	}
 }
 
-func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	userID, ok := ctx.Value(contextKey("userID")).(uuid.UUID)
+func GetUserIDFromContext(ctx context.Context) (int64, error) {
+	userID, ok := ctx.Value(contextKey("userID")).(int64)
 	if !ok {
-		return uuid.Nil, fmt.Errorf("user ID not found in context")
+		return 0, fmt.Errorf("user ID not found in context")
 	}
 
 	return userID, nil

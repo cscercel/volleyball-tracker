@@ -1,6 +1,6 @@
 version: "2"
 sql:
-  - engine: "postgresql"
+  - engine: "sqlite"
     queries: "sql/queries/"
     schema: "sql/migrations/"
     gen:
@@ -11,9 +11,4 @@ sql:
         emit_interface: true
         emit_empty_slices: true
         emit_pointers_for_null_types: true
-        sql_package: "pgx/v5"
-        overrides:
-          - db_type: "uuid"
-            go_type:
-              import: "github.com/google/uuid"
-              type: "UUID"
+        sql_package: "database/sql"

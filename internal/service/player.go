@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/cscercel/volleyball-tracker/internal/db"
-	"github.com/google/uuid"
 )
 
 type PlayerService struct {
@@ -28,7 +27,7 @@ func (s *PlayerService) CreatePlayer(ctx context.Context, name string) (db.Playe
 		_, err := s.queries.UpsertPlayerStats(ctx, db.UpsertPlayerStatsParams{
 			PlayerID:  player.ID,
 			MatchType: match_type,
-			Season:    int32(time.Now().UTC().Year()),
+			Season:    int64(time.Now().UTC().Year()),
 		})
 		if err != nil {
 			return db.Player{}, fmt.Errorf("failed to create stats for %v:%w", match_type, err)
@@ -48,7 +47,7 @@ func (s *PlayerService) ListPlayers(ctx context.Context) ([]db.Player, error) {
 }
 
 func (s *PlayerService) UpdatePlayerName(
-	ctx context.Context, playerID uuid.UUID, newName string,
+	ctx context.Context, playerID int64, newName string,
 ) (db.Player, error) {
 	player, err := s.queries.UpdatePlayerName(ctx, db.UpdatePlayerNameParams{
 		ID:   playerID,
@@ -61,7 +60,7 @@ func (s *PlayerService) UpdatePlayerName(
 	return player, nil
 }
 
-func (s *PlayerService) DeletePlayer(ctx context.Context, playerID uuid.UUID) error {
+func (s *PlayerService) DeletePlayer(ctx context.Context, playerID int64) error {
 	if err := s.queries.DeletePlayer(ctx, playerID); err != nil {
 		return fmt.Errorf("failed to delete player: %w", err)
 	}
@@ -70,7 +69,7 @@ func (s *PlayerService) DeletePlayer(ctx context.Context, playerID uuid.UUID) er
 }
 
 func (s *PlayerService) GetPlayerByID(
-	ctx context.Context, playerID uuid.UUID, match_type string, season int32,
+	ctx context.Context, playerID int64, match_type string, season int64,
 ) (db.GetPlayerStatsByIDRow, error) {
 	player, err := s.queries.GetPlayerStatsByID(ctx, db.GetPlayerStatsByIDParams{
 		PlayerID:  playerID,
@@ -85,7 +84,7 @@ func (s *PlayerService) GetPlayerByID(
 }
 
 func (s *PlayerService) GetPlayerByName(
-	ctx context.Context, playerName, match_type string, season int32,
+	ctx context.Context, playerName, match_type string, season int64,
 ) (db.GetPlayerStatsByNameRow, error) {
 	player, err := s.queries.GetPlayerStatsByName(ctx, db.GetPlayerStatsByNameParams{
 		Name:      playerName,
@@ -100,7 +99,7 @@ func (s *PlayerService) GetPlayerByName(
 }
 
 func (s *PlayerService) GetLeaderboard(
-	ctx context.Context, match_type string, season int32,
+	ctx context.Context, match_type string, season int64,
 ) ([]db.GetLeaderboardRow, error) {
 	leaderboard, err := s.queries.GetLeaderboard(ctx, db.GetLeaderboardParams{
 		MatchType: match_type,
@@ -115,7 +114,7 @@ func (s *PlayerService) GetLeaderboard(
 
 // From matches.sql -> felt it was better here
 func (s *PlayerService) GetPlayerSeasonalMatches(
-	ctx context.Context, playerID uuid.UUID, match_type string, season, page, pageLimit int32,
+	ctx context.Context, playerID int64, match_type string, season, page, pageLimit int64,
 ) ([]db.GetPlayerSeasonalMatchesRow, bool, error) {
 	if page < 1 {
 		page = 1
@@ -127,7 +126,7 @@ func (s *PlayerService) GetPlayerSeasonalMatches(
 		pageLimit = 50 // Cap
 	}
 
-	limit := int32(pageLimit + 1) // fetch one extra to detect next page
+	limit := pageLimit + 1 // fetch one extra to detect next page
 	offset := (page - 1) * pageLimit
 
 	player_matches, err := s.queries.GetPlayerSeasonalMatches(ctx, db.GetPlayerSeasonalMatchesParams{
@@ -141,7 +140,7 @@ func (s *PlayerService) GetPlayerSeasonalMatches(
 		return []db.GetPlayerSeasonalMatchesRow{}, false, fmt.Errorf("failed to retrieve player matches: %w", err)
 	}
 
-	hasMore := int32(len(player_matches)) > pageLimit
+	hasMore := int64(len(player_matches)) > pageLimit
 	if hasMore {
 		player_matches = player_matches[:pageLimit]
 	}

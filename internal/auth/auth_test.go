@@ -5,19 +5,17 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 func TestValidateJWT(t *testing.T) {
-	userID := uuid.New()
+	userID := 1
 	validToken, _ := MakeJWT(userID, "secret", time.Hour)
 
 	tests := []struct {
 		name        string
 		tokenString string
 		tokenSecret string
-		wantUserID  uuid.UUID
+		wantUserID  int64
 		wantErr     bool
 	}{
 		{
@@ -31,14 +29,14 @@ func TestValidateJWT(t *testing.T) {
 			name:        "Invalid token",
 			tokenString: "invalid.token.string",
 			tokenSecret: "secret",
-			wantUserID:  uuid.Nil,
+			wantUserID:  0,
 			wantErr:     true,
 		},
 		{
 			name:        "Wrong secret",
 			tokenString: validToken,
 			tokenSecret: "wrong_secret",
-			wantUserID:  uuid.Nil,
+			wantUserID:  0,
 			wantErr:     true,
 		},
 	}

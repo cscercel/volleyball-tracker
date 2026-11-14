@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL
 
 export type Player = {
-    id: string
+    id: number
     name: string
     created_at: string
     updated_at: string
@@ -9,8 +9,8 @@ export type Player = {
 
 export type PlayerStats = {
     name: string
-    id: string
-    player_id: string
+    id: number
+    player_id: number
     match_type: string
     season: number
     wins: number
@@ -27,7 +27,7 @@ export type PlayerStats = {
 }
 
 export type Match = {
-    id: string
+    id: number
     match_type: string
     season: number
     blue_score: number
@@ -39,12 +39,12 @@ export type Match = {
 
 export type MatchPlayer = {
     color: string
-    player_id: string
+    player_id: number
     player_name: string
 }
 
 export type MatchHistory = {
-    id: string
+    id: number
     match_type: string
     season: number
     blue_score: number
@@ -58,10 +58,8 @@ export type PaginatedResult<T> = {
     hasMore: boolean
 }
 
-// ---------------------------------------------------------------------------
-// Auth
-// ---------------------------------------------------------------------------
 
+// Auth
 export async function login(email: string, password: string) {
     const res = await fetch(`${API_BASE}/users/login`, {
         method: 'POST',
@@ -73,10 +71,8 @@ export async function login(email: string, password: string) {
     return data.token as string
 }
 
-// ---------------------------------------------------------------------------
-// Players
-// ---------------------------------------------------------------------------
 
+// Players
 export async function getPlayers(): Promise<Player[]> {
     const res = await fetch(`${API_BASE}/players`)
     if (!res.ok) throw new Error('Failed to fetch players')
@@ -152,10 +148,8 @@ export async function deletePlayer(playerId: string): Promise<void> {
     if (!res.ok) throw new Error('Failed to delete player')
 }
 
-// ---------------------------------------------------------------------------
-// Matches
-// ---------------------------------------------------------------------------
 
+// Matches
 export async function createMatch(
     matchType: string,
     blueTeam: string[],
@@ -224,10 +218,8 @@ export async function deleteMatch(matchId: string): Promise<void> {
     if (!res.ok) throw new Error('Failed to delete match')
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
+// Helpers
 function authHeaders(): Record<string, string> {
     const token = localStorage.getItem('access_token')
     return {

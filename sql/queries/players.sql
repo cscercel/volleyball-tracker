@@ -1,6 +1,6 @@
 -- name: CreatePlayer :one
 INSERT INTO players (name)
-VALUES ($1)
+VALUES (?)
 RETURNING *;
 
 -- name: ListPlayers :many
@@ -9,27 +9,27 @@ ORDER BY name;
 
 -- name: GetPlayerByID :one
 SELECT * FROM players
-WHERE id = $1;
+WHERE id = ?;
 
 -- name: GetPlayerByName :one
 SELECT * FROM players
-WHERE name = $1;
+WHERE name = ?;
 
 -- name: UpdatePlayerName :one
 UPDATE players
 SET 
-    name = $2,
-    updated_at = NOW()
-WHERE id = $1
+    name = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
 RETURNING *;
 
 -- name: DeletePlayer :exec
 DELETE FROM players
-WHERE id = $1;
+WHERE id = ?;
 
 -- name: UpsertPlayerStats :one
 INSERT INTO player_stats (player_id, match_type, season) 
-VALUES ($1, $2, $3)
+VALUES (?, ?, ?)
 ON CONFLICT (player_id, match_type, season) DO NOTHING
 RETURNING *;
 
@@ -49,9 +49,9 @@ SELECT
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
-WHERE ps.player_id = $1
-AND ps.match_type = $2
-AND ps.season = $3;
+WHERE ps.player_id = ?
+AND ps.match_type = ?
+AND ps.season = ?;
 
 -- name: GetPlayerStatsByName :one
 SELECT 
@@ -69,9 +69,9 @@ SELECT
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
-WHERE p.name = $1
-AND ps.match_type = $2
-AND ps.season = $3;
+WHERE p.name = ?
+AND ps.match_type = ?
+AND ps.season = ?;
 
 -- name: GetLeaderboard :many
 SELECT 
@@ -89,8 +89,8 @@ SELECT
     END AS efficiency_rate
 FROM player_stats ps
 JOIN players p ON p.id = ps.player_id
-WHERE ps.match_type = $1
-AND ps.season = $2
+WHERE ps.match_type = ?
+AND ps.season = ?
 AND (ps.wins + ps.losses + ps.otl) > 0
 ORDER BY points DESC;
 
@@ -100,12 +100,12 @@ SET
     wins = wins + 1,
     streak = streak + 1,
     longest_streak = GREATEST(streak + 1, longest_streak),
-    scored = scored + $4,
-    conceded = conceded + $5,
-    updated_at = NOW()
-WHERE player_id = $1
-AND match_type = $2
-AND season = $3
+    scored = scored + ?,
+    conceded = conceded + ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE player_id = ?
+AND match_type = ?
+AND season = ?
 RETURNING *;
 
 -- name: UpdatePlayerStatsLoss :one
@@ -113,22 +113,22 @@ UPDATE player_stats
 SET 
     losses = losses + 1,
     streak = 0,
-    scored = scored + $4,
-    conceded = conceded + $5,
-    updated_at = NOW()
-WHERE player_id = $1
-AND match_type = $2
-AND season = $3
+    scored = scored + ?,
+    conceded = conceded + ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE player_id = ?
+AND match_type = ?
+AND season = ?
 RETURNING *;
 
 -- name: UpdatePlayerStatsOtl :one
 UPDATE player_stats
 SET 
     otl = otl + 1,
-    scored = scored + $4,
-    conceded = conceded + $5,
-    updated_at = NOW()
-WHERE player_id = $1
-AND match_type = $2
-AND season = $3
+    scored = scored + ?,
+    conceded = conceded + ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE player_id = ?
+AND match_type = ?
+AND season = ?
 RETURNING *;

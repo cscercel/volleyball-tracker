@@ -7,13 +7,12 @@ import (
 
 	"github.com/cscercel/volleyball-tracker/internal/auth"
 	"github.com/cscercel/volleyball-tracker/internal/db"
-	"github.com/google/uuid"
 )
 
 type UserLogin struct {
-	ID    uuid.UUID `json:"id"`
-	Email string    `json:"email"`
-	Token string    `json:"token"`
+	ID    int64  `json:"id"`
+	Email string `json:"email"`
+	Token string `json:"token"`
 }
 
 type UserService struct {
@@ -87,7 +86,7 @@ func (s *UserService) GetUser(ctx context.Context, email, password string) (User
 }
 
 func (s *UserService) UpdateUserEmail(
-	ctx context.Context, id uuid.UUID, new_email string,
+	ctx context.Context, id int64, new_email string,
 ) (db.UpdateUserEmailRow, error) {
 	user, err := s.queries.GetUserByID(ctx, id)
 	if err != nil {
@@ -106,7 +105,7 @@ func (s *UserService) UpdateUserEmail(
 }
 
 func (s *UserService) UpdateUserPassword(
-	ctx context.Context, id uuid.UUID, new_password string,
+	ctx context.Context, id int64, new_password string,
 ) (db.UpdateUserPasswordRow, error) {
 	user, err := s.queries.GetUserByID(ctx, id)
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/cscercel/volleyball-tracker/internal/db"
-	"github.com/google/uuid"
 )
 
 type MatchService struct {
@@ -82,7 +81,7 @@ func (s *MatchService) CreateMatch(
 
 	match, err := s.queries.CreateMatch(ctx, db.CreateMatchParams{
 		MatchType: match_type,
-		Season:    int32(time.Now().UTC().Year()),
+		Season:    int64(time.Now().UTC().Year()),
 	})
 	if err != nil {
 		return db.Match{}, fmt.Errorf("failed to create match: %w", err)
@@ -113,7 +112,7 @@ func (s *MatchService) CreateMatch(
 	return match, nil
 }
 
-func (s *MatchService) GetMatch(ctx context.Context, matchID uuid.UUID) (db.Match, error) {
+func (s *MatchService) GetMatch(ctx context.Context, matchID int64) (db.Match, error) {
 	match, err := s.queries.GetMatch(ctx, matchID)
 	if err != nil {
 		return db.Match{}, fmt.Errorf("failed to retrieve match: %w", err)
@@ -123,7 +122,7 @@ func (s *MatchService) GetMatch(ctx context.Context, matchID uuid.UUID) (db.Matc
 }
 
 func (s *MatchService) ListMatchesBySeason(
-	ctx context.Context, match_type string, season, page, pageLimit int32,
+	ctx context.Context, match_type string, season, page, pageLimit int64,
 ) ([]db.Match, bool, error) {
 	if page < 1 {
 		page = 1
@@ -135,7 +134,7 @@ func (s *MatchService) ListMatchesBySeason(
 		pageLimit = 50 // Cap
 	}
 
-	limit := int32(pageLimit + 1) // fetch one extra to detect next page
+	limit := pageLimit + 1 // fetch one extra to detect next page
 	offset := (page - 1) * pageLimit
 
 	matches, err := s.queries.ListMatchesBySeason(ctx, db.ListMatchesBySeasonParams{
@@ -148,7 +147,7 @@ func (s *MatchService) ListMatchesBySeason(
 		return []db.Match{}, false, fmt.Errorf("failed to list seasonal matches: %w", err)
 	}
 
-	hasMore := int32(len(matches)) > pageLimit
+	hasMore := int64(len(matches)) > pageLimit
 	if hasMore {
 		matches = matches[:pageLimit]
 	}
@@ -165,7 +164,7 @@ func (s *MatchService) ListUncompletedMatches(ctx context.Context) ([]db.Match, 
 	return matches, nil
 }
 
-func (s *MatchService) DeleteUncompletedMatch(ctx context.Context, matchID uuid.UUID) error {
+func (s *MatchService) DeleteUncompletedMatch(ctx context.Context, matchID int64) error {
 	match, err := s.queries.GetMatch(ctx, matchID)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve match: %w", err)
@@ -182,7 +181,7 @@ func (s *MatchService) DeleteUncompletedMatch(ctx context.Context, matchID uuid.
 	return nil
 }
 
-func (s *MatchService) GetMatchPlayers(ctx context.Context, matchID uuid.UUID) ([]db.GetMatchPlayersRow, error) {
+func (s *MatchService) GetMatchPlayers(ctx context.Context, matchID int64) ([]db.GetMatchPlayersRow, error) {
 	match_players, err := s.queries.GetMatchPlayers(ctx, matchID)
 	if err != nil {
 		return []db.GetMatchPlayersRow{}, fmt.Errorf("failed to retrieve players from match: %w", err)
@@ -192,7 +191,7 @@ func (s *MatchService) GetMatchPlayers(ctx context.Context, matchID uuid.UUID) (
 }
 
 func (s *MatchService) RegisterMatch(
-	ctx context.Context, matchID uuid.UUID, blue_score, red_score int32,
+	ctx context.Context, matchID, blue_score, red_score int64,
 ) (db.Match, error) {
 	// Check scores
 	if blue_score == red_score {
@@ -230,7 +229,7 @@ func (s *MatchService) RegisterMatch(
 	}
 
 	for _, player := range match_players {
-		var scored, conceded int32
+		var scored, conceded int64
 
 		if player.Color == "blue" {
 			scored = blue_score

@@ -438,7 +438,7 @@ export default function Matches() {
                     className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
                   >
                     <div className="mb-3 flex gap-4 text-sm font-medium text-slate-500">
-                      <span>Match {match.id.slice(0, 8)}</span>
+                      <span>Match {match.id}</span>
                       <span>{match.match_type.toUpperCase()}</span>
                     </div>
 
