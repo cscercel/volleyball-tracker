@@ -32,9 +32,7 @@ export default function Matches() {
       .catch((e) => console.error(e))
   }, [])
 
-  // ---------------------------------------------------------------------
   // TAB 1 - Create Match
-  // ---------------------------------------------------------------------
   const [matchType, setMatchType] = useState('indoor')
   const [draftType, setDraftType] = useState<'random' | 'manual'>('random')
   const [blueTeam, setBlueTeam] = useState<string[]>([])
@@ -115,9 +113,7 @@ export default function Matches() {
     .filter((p) => p.color === 'red')
     .map((p) => p.player_name)
 
-  // ---------------------------------------------------------------------
   // TAB 2 - Draft Matches
-  // ---------------------------------------------------------------------
   const [drafts, setDrafts] = useState<Match[]>([])
   const [draftRosters, setDraftRosters] = useState<Record<string, MatchPlayer[]>>({})
   const [loadingDrafts, setLoadingDrafts] = useState(false)
@@ -141,7 +137,7 @@ export default function Matches() {
     }
   }
 
-  async function handleSubmitResults(matchId: string) {
+  async function handleSubmitResults(matchId: number) {
     const blue = blueScores[matchId]
     const red = redScores[matchId]
     if (blue === undefined || blue === '' || red === undefined || red === '') {
@@ -160,7 +156,7 @@ export default function Matches() {
     }
   }
 
-  async function handleDeleteDraft(matchId: string) {
+  async function handleDeleteDraft(matchId: number) {
     try {
       await deleteMatch(matchId)
       await fetchDrafts()
@@ -169,9 +165,7 @@ export default function Matches() {
     }
   }
 
-  // ---------------------------------------------------------------------
   // TAB 3 - Completed Matches
-  // ---------------------------------------------------------------------
   const [completedType, setCompletedType] = useState('indoor')
   const [completedSeason, setCompletedSeason] = useState(currentYear)
   const [completed, setCompleted] = useState<Match[]>([])

@@ -57,7 +57,7 @@ export default function Players() {
   }, [])
 
   // --- Profile tab state ---
-  const [selectedPlayerId, setSelectedPlayerId] = useState('')
+  const [selectedPlayerId, setSelectedPlayerId] = useState(0)
   const [matchType, setMatchType] = useState('indoor')
   const [season, setSeason] = useState(currentYear)
   const [stats, setStats] = useState<PlayerStats | null>(null)
