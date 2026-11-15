@@ -80,7 +80,7 @@ export async function getPlayers(): Promise<Player[]> {
 }
 
 export async function getPlayerStats(
-    playerId: string,
+    playerId: number,
     matchType: string,
     season: number
 ): Promise<PlayerStats> {
@@ -103,7 +103,7 @@ export async function getLeaderboard(
 }
 
 export async function getPlayerHistory(
-    playerId: string,
+    playerId: number,
     matchType: string,
     season: number,
     page = 1,
@@ -128,7 +128,7 @@ export async function createPlayer(name: string): Promise<Player> {
 }
 
 export async function updatePlayerName(
-    playerId: string,
+    playerId: number,
     name: string
 ): Promise<Player> {
     const res = await fetch(`${API_BASE}/players/${playerId}`, {
@@ -140,7 +140,7 @@ export async function updatePlayerName(
     return res.json()
 }
 
-export async function deletePlayer(playerId: string): Promise<void> {
+export async function deletePlayer(playerId: number): Promise<void> {
     const res = await fetch(`${API_BASE}/players/${playerId}`, {
         method: 'DELETE',
         headers: authHeaders(),
@@ -164,13 +164,13 @@ export async function createMatch(
     return res.json()
 }
 
-export async function getMatch(matchId: string): Promise<Match> {
+export async function getMatch(matchId: number): Promise<Match> {
     const res = await fetch(`${API_BASE}/matches/${matchId}`)
     if (!res.ok) throw new Error('Failed to fetch match')
     return res.json()
 }
 
-export async function getMatchRoster(matchId: string): Promise<MatchPlayer[]> {
+export async function getMatchRoster(matchId: number): Promise<MatchPlayer[]> {
     const res = await fetch(`${API_BASE}/matches/${matchId}/roster`)
     if (!res.ok) throw new Error('Failed to fetch match roster')
     return res.json()
@@ -197,7 +197,7 @@ export async function getMatchesBySeason(
 }
 
 export async function submitMatchResults(
-    matchId: string,
+    matchId: number,
     blueScore: number,
     redScore: number
 ): Promise<Match> {
@@ -210,7 +210,7 @@ export async function submitMatchResults(
     return res.json()
 }
 
-export async function deleteMatch(matchId: string): Promise<void> {
+export async function deleteMatch(matchId: number): Promise<void> {
     const res = await fetch(`${API_BASE}/matches/${matchId}`, {
         method: 'DELETE',
         headers: authHeaders(),
