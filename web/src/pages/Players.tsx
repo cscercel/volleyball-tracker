@@ -156,7 +156,7 @@ export default function Players() {
   }
 
   // --- Manage players tab state ---
-  const [managePlayerId, setManagePlayerId] = useState('')
+  const [managePlayerId, setManagePlayerId] = useState(0)
   const [newName, setNewName] = useState('')
   const [manageSuccess, setManageSuccess] = useState('')
   const [manageError, setManageError] = useState('')
@@ -179,7 +179,7 @@ export default function Players() {
     try {
       await deletePlayer(managePlayerId)
       setManageSuccess('Player deleted')
-      setManagePlayerId('')
+      setManagePlayerId(0)
       await fetchPlayers()
     } catch {
       setManageError('Failed to delete player.')
@@ -226,7 +226,7 @@ export default function Players() {
               <div className="mb-6 flex flex-col gap-3 sm:flex-row">
                 <select
                   value={selectedPlayerId}
-                  onChange={(e) => setSelectedPlayerId(e.target.value)}
+                  onChange={(e) => setSelectedPlayerId(Number(e.target.value))}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
                 >
                   <option value="">Select a player</option>
@@ -404,7 +404,7 @@ export default function Players() {
             <>
               <select
                 value={managePlayerId}
-                onChange={(e) => setManagePlayerId(e.target.value)}
+                onChange={(e) => setManagePlayerId(Number(e.target.value))}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent/30"
               >
                 <option value="">Select a player</option>
