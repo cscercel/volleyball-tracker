@@ -7,7 +7,6 @@
 ### Changed
 - Migrated database to turso (refactor schemas into sqlite instead of postgresql)
 - Updated `favicon` to be an actual volleyball instead of default svg
-- Small UI palette changes
 
 ### Fixed
 
