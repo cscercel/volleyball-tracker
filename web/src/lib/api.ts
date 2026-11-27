@@ -37,6 +37,20 @@ export type Match = {
     updated_at: string
 }
 
+export type DemoMatch = {
+    id: number
+    match_type: string
+    season: number
+    blue_score: number
+    red_score: number
+    is_completed: boolean
+    created_at: string
+    updated_at: string
+    blueTeam: string[]
+    redTeam: string[]
+    isDemo: boolean
+}
+
 export type MatchPlayer = {
     color: string
     player_id: number
@@ -170,7 +184,7 @@ export async function createDemoMatch(
     matchType: string,
     blueTeam: string[],
     redTeam: string[]
-): Promise<Match> {
+): Promise<DemoMatch> {
     const res = await fetch(`${API_BASE}/matches/demo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
