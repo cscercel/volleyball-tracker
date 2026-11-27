@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.0] - 2026.11.26
+
+### Added
+- Demo mode for matches. If a guest visits the website they can build drafts without saving them to the db.
+### Changed
+
+### Fixed
+
 ## [2.2.0] - 2026.11.14
 
 ### Added

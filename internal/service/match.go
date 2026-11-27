@@ -62,7 +62,7 @@ func (s *MatchService) addPlayerToMatch(
 }
 
 func (s *MatchService) CreateMatch(
-	ctx context.Context, match_type string, blue_team, red_team []string,
+	ctx context.Context, match_type string, blue_team, red_team []string, demo bool,
 ) (db.Match, error) {
 	if match_type != "indoor" && match_type != "beach" {
 		return db.Match{}, fmt.Errorf("invalid match type, expected `indoor` or `beach`, got `%s`", match_type)
@@ -79,31 +79,43 @@ func (s *MatchService) CreateMatch(
 		}
 	}
 
+	var bluePlayers, redPlayers []db.Player
+	for _, player_name := range blue_team {
+		player, err := s.queries.GetPlayerByName(ctx, player_name)
+		if err != nil {
+			return db.Match{}, fmt.Errorf("player `%s` not found: %w", player_name, err)
+		}
+		bluePlayers = append(bluePlayers, player)
+	}
+	for _, player_name := range red_team {
+		player, err := s.queries.GetPlayerByName(ctx, player_name)
+		if err != nil {
+			return db.Match{}, fmt.Errorf("player `%s` not found: %w", player_name, err)
+		}
+		redPlayers = append(redPlayers, player)
+	}
+
+	season := int64(time.Now().UTC().Year())
+
+	// demo mode returns early and doesn't store match in db
+	if demo {
+		return db.Match{MatchType: match_type, Season: season}, nil
+	}
+
 	match, err := s.queries.CreateMatch(ctx, db.CreateMatchParams{
 		MatchType: match_type,
-		Season:    int64(time.Now().UTC().Year()),
+		Season:    season,
 	})
 	if err != nil {
 		return db.Match{}, fmt.Errorf("failed to create match: %w", err)
 	}
 
-	// Add players to match
-	for _, player_name := range blue_team {
-		// Check if player exists
-		player, err := s.queries.GetPlayerByName(ctx, player_name)
-		if err != nil {
-			return db.Match{}, fmt.Errorf("player not found: %w", err)
-		}
+	for _, player := range bluePlayers {
 		if err := s.addPlayerToMatch(ctx, match, player, "blue"); err != nil {
 			return db.Match{}, fmt.Errorf("failed to add players to blue team: %w", err)
 		}
 	}
-	for _, player_name := range red_team {
-		// Check if player exists
-		player, err := s.queries.GetPlayerByName(ctx, player_name)
-		if err != nil {
-			return db.Match{}, fmt.Errorf("player not found: %w", err)
-		}
+	for _, player := range redPlayers {
 		if err := s.addPlayerToMatch(ctx, match, player, "red"); err != nil {
 			return db.Match{}, fmt.Errorf("failed to add players to red team: %w", err)
 		}

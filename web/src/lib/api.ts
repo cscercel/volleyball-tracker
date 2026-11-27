@@ -164,6 +164,23 @@ export async function createMatch(
     return res.json()
 }
 
+let demoCounter = 0
+
+export async function createDemoMatch(
+    matchType: string,
+    blueTeam: string[],
+    redTeam: string[]
+): Promise<Match> {
+    const res = await fetch(`${API_BASE}/matches/demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ match_type: matchType, blue_team: blueTeam, red_team: redTeam }),
+    })
+    if (!res.ok) throw new Error('Failed to create demo match')
+    const match: Match = await res.json()
+    return { ...match, id: --demoCounter, isDemo: true, blueTeam, redTeam }
+}
+
 export async function getMatch(matchId: number): Promise<Match> {
     const res = await fetch(`${API_BASE}/matches/${matchId}`)
     if (!res.ok) throw new Error('Failed to fetch match')

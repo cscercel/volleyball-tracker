@@ -26,6 +26,7 @@ func (h *MatchHandler) RegisterRoutes(r chi.Router, authMiddleware func(http.Han
 		r.Get("/", h.handleListMatchesBySeason)
 		r.Get("/uncompleted", h.handleListUncompletedMatches)
 		r.Get("/{id}/roster", h.handleGetMatchPlayers)
+		r.Post("/demo", h.handleCreateDemoMatch)
 
 		// Protected routes
 		r.Group(func(r chi.Router) {
@@ -58,7 +59,36 @@ func (h *MatchHandler) handleCreateMatch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	match, err := h.service.CreateMatch(r.Context(), body.MatchType, body.BlueTeam, body.RedTeam)
+	match, err := h.service.CreateMatch(r.Context(), body.MatchType, body.BlueTeam, body.RedTeam, false)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "could not create match", err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusCreated, match)
+}
+
+// @Summary      Create Demo Match
+// @Tags         matches
+// @Produce      json
+// @Param        body body      object{match_type=string, blue_team=[]string, red_team=[]string} true "Match Body"
+// @Success      201  {array}   db.Match
+// @Failure      400  {object}  object{error=string}
+// @Failure      500  {object}  object{error=string}
+// @Router       /api/v1/demo [post]
+func (h *MatchHandler) handleCreateDemoMatch(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		MatchType string   `json:"match_type"`
+		BlueTeam  []string `json:"blue_team"`
+		RedTeam   []string `json:"red_team"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondWithError(w, http.StatusBadRequest, "invalid request body", err)
+		return
+	}
+
+	match, err := h.service.CreateMatch(r.Context(), body.MatchType, body.BlueTeam, body.RedTeam, true)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "could not create match", err)
 		return
